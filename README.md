@@ -273,8 +273,21 @@ Measured against the filter rather than assumed, because two of these turned
 out not to qualify for reasons nobody had guessed:
 
 - **The iOS install script is in.** Both consumers had one, with the same
-  guards found separately. The banner generator is next: three implementations
-  of one problem, in three languages, counting this repo's own.
+  guards found separately.
+- **The banner generator does not extract, measured.** Three implementations
+  of one problem and **not a single shared line of code**: they differ in what
+  the mark IS (a drawing function, a shipped PNG, an SVG) and in what they emit
+  (an SVG with the word as paths and three variants, or one PNG). What they
+  genuinely share is the procedure and its five traps, and that is already
+  extracted — into `docs/readmes.md`, as rules. Sharing the code would mean
+  rewriting the richest of the three to fit a signature that suits neither of
+  the others well. The practice travelled; the implementation should not.
+- **The theme module passes the filter and is still not worth it.**
+  `applyTheme` and its preference type are genuinely the same fourteen lines in
+  two consumers. Against that: a config entry, an import path, and each
+  consumer deliberately loosening its guard against the bundle reaching into
+  `kyber/`. Fourteen lines do not pay for that. It goes in when something
+  bigger goes with it.
 - **The design-token emitter does not, and not because one side lacks it.**
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it
