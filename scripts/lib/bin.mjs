@@ -55,5 +55,21 @@ export async function importFrom(fromDir, specifier) {
         "  kyber does not install it; the consumer's own workspace must declare it.",
     );
   }
-  return import(pathToFileURL(resolved).href);
+  const namespace = await import(pathToFileURL(resolved).href);
+  // A CommonJS package reached through dynamic import puts everything on
+  // `default`. Node hoists named exports only when it can detect them
+  // statically, which it cannot for many CJS builds — so `mod.chromium` comes
+  // back undefined and the caller crashes one line later, on a package that is
+  // installed and fine. Measured on a real one: the namespace held nothing but
+  // `default` and `module.exports`, and every export was inside `default`.
+  //
+  // That shape is recognised exactly, rather than always preferring `default`:
+  // an ESM module with a default export would otherwise have its named exports
+  // shadowed by whatever the default happens to hold.
+  const named = Object.keys(namespace).filter((k) => k !== "default" && k !== "module.exports");
+  const inner = namespace.default;
+  const carriesExports =
+    inner !== null && (typeof inner === "object" || typeof inner === "function");
+  if (named.length === 0 && carriesExports) return inner;
+  return namespace;
 }
