@@ -39,26 +39,22 @@ last step is how you find out it worked. The contract key by key is in
    git submodule add https://github.com/criscardozo/kyber.git kyber
    ```
 
-   HTTPS and not SSH: a build container has no SSH key, and CI fetches kyber
-   with its own step (point 8), so an SSH URL only breaks things.
+   HTTPS and not SSH: a build container has no SSH key, so an SSH URL breaks
+   deploy platforms that clone submodules — and kyber is public, so HTTPS needs
+   no credential from anyone.
 
-   **Know the ceiling before you lean on the submodule.** Vercel deploys a
-   submodule only when it is publicly reachable over HTTP; a private one fails
-   at the clone step, and this is documented product behaviour, not a
-   misconfiguration. Granting the Vercel GitHub App access to kyber's
-   repository does **not** fix it — measured here, with the App already on
-   *All repositories*. What you get is one
-   `Warning: Failed to fetch one or more git submodules` line, an empty
-   `kyber/`, and a build that carries on to a **green deploy**.
+   Being public is load-bearing here, not incidental. A **private** submodule
+   is not deployable: Vercel clones one only when it is publicly reachable over
+   HTTP, and a private one fails with a single
+   `Warning: Failed to fetch one or more git submodules` while the build
+   carries on to a green deploy with an empty directory. Granting the Vercel
+   GitHub App access does not change it — that was measured. kyber is public
+   precisely so that this whole class of problem does not exist, which is also
+   why nothing in here may name a consumer.
 
-   So while kyber is private: nothing the deployed bundle imports may come
-   from kyber. Scripts, tests, hooks and CI are fine — they run where the
-   submodule is really there. If a deployed app ever needs to import from
-   kyber, the submodule is the wrong shape for it: make kyber public, or ship
-   it as a private dependency.
-
-   If your own GitHub access is SSH-only, map it once and globally rather than
-   changing the URL:
+   Cloning a public repository over HTTPS needs no authentication, so nothing
+   else is required. A developer who prefers SSH for everything can map it
+   globally instead of changing the URL, which would break the platforms above:
 
    ```sh
    git config --global url."git@github.com:".insteadOf "https://github.com/"
@@ -125,31 +121,20 @@ last step is how you find out it worked. The contract key by key is in
    beside it under the same heading. Never copy the text across: a second copy
    is a copy that drifts.
 
-8. **Fetch the submodule in CI with a second checkout.** The default workflow
-   token is scoped to the consumer alone, so it cannot read another private
-   repository: `submodules: true` fails the whole step. A read-only deploy key
-   of kyber (secret `KYBER_DEPLOY_KEY`) fetches it in a step of its own, with
-   the ref taken from the gitlink so CI builds the exact commit the consumer
-   recorded — and prints the sha it fetched:
+8. **Ask for the submodule in CI.** kyber is public, so one line does it and
+   no credential is involved:
 
    ```yaml
    - uses: actions/checkout@v7
-   - id: kyber
-     run: echo "sha=$(git rev-parse HEAD:kyber)" >> "$GITHUB_OUTPUT"
-   - uses: actions/checkout@v7
      with:
-       repository: criscardozo/kyber
-       ref: ${{ steps.kyber.outputs.sha }}
-       ssh-key: ${{ secrets.KYBER_DEPLOY_KEY }}
-       path: kyber
+       submodules: true
    ```
 
-   Two things this shape is deliberate about. `ssh-key:` goes on the SECOND
-   checkout, never the first: on the first it makes the CONSUMER clone over
-   SSH with that key, and a deploy key of kyber cannot clone the consumer (nor
-   can one deploy key be registered on two repositories). And it is first-party
-   only — the one step in a workflow that holds a credential is not the place
-   to add a third-party action.
+   It checks out the exact commit the consumer's gitlink records. Were kyber
+   private this would fail — the workflow token is scoped to the consumer
+   alone — and would need a read-only deploy key fetching kyber in a second
+   checkout step. That is the cost being avoided by keeping kyber public and
+   free of anything worth hiding.
 
 9. **Guard the boundary from your side.** kyber names no consumer, and it is
    the consumer that proves it: keep a list of your own needles — project ids,
@@ -166,14 +151,11 @@ last step is how you find out it worked. The contract key by key is in
     FIRESTORE_EMULATOR_HOST=127.0.0.1:<your port> pnpm restore backups/<the file it wrote>
     ```
 
-    Then two that no command reports:
+    Then two more:
 
-    - **Read the log of the first deploy after adding `.gitmodules`.** While
-      kyber is private the warning WILL be there and the deploy will be green
-      anyway, so what you are checking is that nothing in the deployed bundle
-      needed the directory that is now empty. A guard that fails when anything
-      the bundle imports reaches into `kyber/` is worth more than this reading,
-      because the reading only happens when somebody remembers.
+    - **Read the log of the first deploy after adding `.gitmodules`** and check
+      it does not say `Failed to fetch one or more git submodules`. A green
+      deploy does not prove the submodule arrived; only the log does.
     - **Run the round trip.** A backup nobody has read back is a hope: seed,
       back up, wipe, check the wipe left nothing, restore, compare. Make the
       comparison fail once on purpose before trusting one that passes.
@@ -194,6 +176,7 @@ last step is how you find out it worked. The contract key by key is in
 ```
 kyber/
   README.md
+  LICENSE                    MIT, the same as every consumer
   stack.json                 declared versions, one per shared tool
   docs/                      the rules that travel (Spanish, as written)
     publicar.md              nothing is published unless asked
@@ -215,6 +198,10 @@ kyber/
     vitest-rules.mjs         the vitest settings every rules suite shares
   test/                      node --test, against a fixture consumer
 ```
+
+kyber is public and MIT-licensed, like the apps that consume it. It holds no
+credentials and names no consumer, which is what makes publishing it free of
+consequence — and what a consumer's own identity guard keeps true.
 
 kyber has no runtime dependencies. `firebase-admin`, `firebase-tools` and
 `vitest` are peers: they resolve from the consumer's own `node_modules`
@@ -249,3 +236,11 @@ Noted for a second batch, once the consumers have converged on them:
 `set-version.mjs` (reads `iosTargets` from the config), the pre-push hook, the
 design-token emitter, `verify-pwa.mjs`, the iOS install script, and a
 reusable backup workflow (which needs an explicit OK, per the Actions rule).
+
+Browser-side code is now possible too, since a public submodule is really
+there at build time. The first candidate that passes the filter is the theme
+module: `applyTheme` and its preference type are the same fourteen lines in two
+consumers, with the palette and the storage key staying behind as identity.
+Anything moved there has to loosen each consumer's own guard against the bundle
+reaching into `kyber/` — deliberately, with the reason written down, never by
+deleting the guard.

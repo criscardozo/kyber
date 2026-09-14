@@ -92,43 +92,25 @@ git submodule add https://github.com/criscardozo/kyber.git kyber
 git submodule update --init
 ```
 
-The submodule URL is HTTPS: a build container has no SSH key, and CI fetches
-kyber in a step of its own.
+The submodule URL is HTTPS and kyber is public, so cloning it needs no
+credential anywhere: not on a developer's machine, not in CI, not on a deploy
+platform.
 
-Vercel deploys a submodule only when it is publicly reachable over HTTP. A
-private one fails at the clone step by documented design, and granting the
-Vercel GitHub App access to kyber's repository does not change that — measured
-with the App already on *All repositories*. The result is one
-`Warning: Failed to fetch one or more git submodules` line, an empty `kyber/`,
-and a green deploy. While kyber is private, nothing the deployed bundle imports
-may come from it; scripts, tests, hooks and CI are unaffected, because they run
-where the submodule really is.
+That is deliberate. A **private** submodule is not deployable on Vercel, which
+clones one only when it is publicly reachable over HTTP; a private one fails
+with a single `Warning: Failed to fetch one or more git submodules` and the
+build continues to a green deploy over an empty directory. Granting the Vercel
+GitHub App access does not fix it — measured, with the App on *All
+repositories*. kyber avoids the whole class by holding nothing worth hiding.
 
-A developer whose GitHub access is SSH-only maps it once, globally:
-
-```sh
-git config --global url."git@github.com:".insteadOf "https://github.com/"
-```
-
-In GitHub Actions the default token is scoped to the consumer alone and cannot
-read another private repository, so `submodules: true` fails the step. A
-read-only deploy key of kyber (secret `KYBER_DEPLOY_KEY`) fetches it in a step
-of its own, at the ref the gitlink records:
+In GitHub Actions, one line is the whole story:
 
 ```yaml
 - uses: actions/checkout@v7
-- id: kyber
-  run: echo "sha=$(git rev-parse HEAD:kyber)" >> "$GITHUB_OUTPUT"
-- uses: actions/checkout@v7
   with:
-    repository: criscardozo/kyber
-    ref: ${{ steps.kyber.outputs.sha }}
-    ssh-key: ${{ secrets.KYBER_DEPLOY_KEY }}
-    path: kyber
+    submodules: true
 ```
 
-`ssh-key:` belongs on the second checkout, never the first: on the first it
-makes the CONSUMER clone over SSH with that key, and a deploy key of kyber
-cannot clone the consumer — nor can one deploy key be registered on two
-repositories. Keeping it to first-party actions is deliberate too: the one step
-that holds a credential is not the place for a third-party action.
+It checks out the commit the gitlink records. A private kyber would need a
+read-only deploy key and a second checkout step, because the workflow token is
+scoped to the consumer's own repository.

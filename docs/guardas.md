@@ -46,13 +46,14 @@ midiendo, en las dos apps, y por eso viajan juntas.
   deploy», que sonaba a diagnóstico y era otra predicción sin medir — lo
   documentado es que un submódulo privado no se clona con ningún permiso. La
   forma se repite justo cuando uno se siente escarmentado.
-- **La falla que no cambia el color de nada es la que hay que ir a buscar.** Un
-  submódulo privado que el deploy no puede clonar sale como una línea de
-  `Warning:` y el build sigue: verde, sin el submódulo. Ninguna guarda de
-  estado lo ve, y leer el log sólo ayuda el día que alguien se acuerda. Cuando
-  la falla es permanente y tolerada, lo que corresponde no es un paso de
-  lectura sino una guarda que falle si algo del bundle empieza a depender de lo
-  que no está.
+- **La falla que no cambia el color de nada es la que hay que ir a buscar.** El
+  caso: un submódulo privado que el deploy no podía clonar salía como una línea
+  de `Warning:` y el build seguía — verde, sin el submódulo. Ninguna guarda de
+  estado lo veía, y leer el log sólo ayuda el día que alguien se acuerda. Se
+  resolvió sacando la causa, no vigilándola. Cuando una falla así es permanente
+  y tolerada, las dos salidas son eliminar la condición que la produce, o una
+  guarda que falle cuando algo empiece a depender de lo que no está; el paso de
+  lectura escrito en un documento es la más débil de las tres.
 - **Una frase escrita con seguridad sobrevive más que un bug**, porque nada la
   ejecuta. Lo que se afirma en un comentario o en un doc se mide, no se relee;
   y si no se midió, se escribe como creencia, separada de lo medido.
