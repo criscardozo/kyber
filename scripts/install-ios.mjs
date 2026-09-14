@@ -34,6 +34,16 @@
 // at the first stage and still printed a plausible "non-zero exit, profiles
 // restored" for a build that had never run.
 //
+// Last run against a real phone: 15 September 2026, in a consumer with three
+// projects' profiles on the machine. It set aside 3 of 13 — exactly that app's
+// — built, reissued a signature good for 6 days 23 hours, and the bundle
+// reported the same version the manifest declares. The first attempt failed at
+// the install step on a CoreDevice error, which is how guard 3 came to be
+// exercised for real rather than in a test: the machine was left with all 13
+// profiles, the three reissued ones among them. The date is written down
+// instead of the assurance, because this claim is only as true as the last
+// time somebody ran it.
+//
 // Usage:  node kyber/scripts/install-ios.mjs [--device <udid-or-name>]
 // Reads from .kyber/config.json: bundleId, iosScheme, and optionally iosDir,
 // iosDevice and webManifest.
