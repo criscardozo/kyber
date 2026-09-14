@@ -53,7 +53,9 @@ last step is how you find out it worked. The contract key by key is in
    why nothing in here may name a consumer.
 
    Cloning a public repository over HTTPS needs no authentication, so nothing
-   else is required. A developer who prefers SSH for everything can map it
+   else is required: **no secret, no deploy key, no token, anywhere.** A
+   consumer that had one for a previously private kyber can delete it, and the
+   way to verify is to delete it and run CI, not to stop referencing it. A developer who prefers SSH for everything can map it
    globally instead of changing the URL, which would break the platforms above:
 
    ```sh
@@ -170,6 +172,29 @@ last step is how you find out it worked. The contract key by key is in
 - Extract on the second occurrence, not the first, and bring the reasoning
   with the code. The comments explaining why a guard exists are most of what
   is being shared.
+
+## docs/ is executable instruction, not only prose
+
+Each consumer imports these files into its `CLAUDE.md` with
+`@kyber/docs/<file>.md`. That means a file in here is not documentation a
+person may read — it is text an agent loads and follows in three projects, and
+**moving a consumer's gitlink is what applies it**.
+
+While these files describe how to work, bumping the gitlink is routine. The
+moment one of them widens what an agent may do without asking, bumping the
+gitlink becomes a permissions change — and a session working on one project
+must not be able to make that change to another. So:
+
+- **A rule that grants authority is adopted by the owner, in the consumer,
+  saying so there.** Not by a peer editing this repo and a gitlink bump
+  carrying it across. A relayed authorisation is not an authorisation, however
+  faithfully quoted: if any link in the chain misread it, nothing afterwards
+  can tell where.
+- **A rule that describes how to work travels normally**, because being wrong
+  about it costs a correction, not an action nobody sanctioned.
+- When a bump changes anything in the first category, say so in the message
+  that proposes it, so the person moving the pointer knows what they are
+  moving.
 
 ## Layout
 

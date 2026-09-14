@@ -22,6 +22,11 @@ midiendo, en las dos apps, y por eso viajan juntas.
   mano sólo prueba que lo que nombra coincide. La lista se contrasta contra el
   árbol (los archivos, las colecciones raíz) y la guarda **nombra lo que
   falta**.
+- **Un título también es una copia.** Un encabezado que describe el contenido
+  de otro archivo lo duplica igual que un párrafo, y es peor de encontrar
+  porque no parece prosa: quien busca copias lee cuerpos. Pasó con una sección
+  que era sólo un puntero a la regla compartida y cuyo título seguía enunciando
+  la regla vieja. Si el cuerpo delega, el título también delega.
 - **La guarda no deletrea lo que sostiene.** Una guarda que mantiene juntas N
   copias de un valor no puede escribir ese valor, porque entonces es la copia
   N+1 que nadie acopla. Y se somete a su propia regla, sin lista de
