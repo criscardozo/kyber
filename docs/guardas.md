@@ -18,6 +18,23 @@ midiendo, en las dos apps, y por eso viajan juntas.
   vacía, los tests no fallan, **dejan de existir**, y la suite queda verde con
   cero cobertura. La afirmación va en un único test que recorre la lista por
   adentro y además exige que la lista tenga más de N entradas.
+- **Un relay hereda la confianza del emisor y pierde su procedencia.** Un dato
+  ajeno **se siente** conocido después de pasar por dos manos, y ahí es donde
+  se afirma sin haberlo mirado. Pasó tres veces en un día entre tres sesiones,
+  todas sobre archivos que estaban a un `grep` en la misma máquina: «el otro
+  proyecto usa nombres» (contaba), «el otro tiene el hook» (no existía), «el
+  problema es tal dependencia» (el problema era que el archivo no estaba). El
+  remedio no es desconfiar del que reenvía: es que **quien va a actuar sobre el
+  dato lo lea**. Cuando la fuente está en el disco, eso cuesta un comando; el
+  que no lo corre está eligiendo la versión de segunda mano.
+- **Un patrón que atraviesa una estructura que no entiende contesta sobre otra
+  cosa.** Un regex de varias líneas desde una clave hasta la próxima
+  coincidencia cruza límites de bloque, y le atribuyó a un target la versión de
+  otro — dio una respuesta, y la respuesta era sobre algo distinto de lo
+  preguntado, que es la misma queja que contra un total. Si hay bloques,
+  recorrer llevando cuál es el actual, y probarlo contra el archivo real y no
+  contra un fixture cómodo: en estos proyectos hay claves a la misma
+  indentación que los targets y ninguna lo es.
 - **Un total contesta «cuántos» a una pregunta que era «cuáles».** Un conteo
   sobrevive a una sustitución: sacá uno y agregá otro y el número no se mueve,
   mientras la cosa pasó a estar donde nadie la puso y falta donde alguien la
