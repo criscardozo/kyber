@@ -1,6 +1,4 @@
-<img src="icon.svg" alt="A kyber crystal" width="104" align="right">
-
-# kyber
+# <img src="icon.svg" alt="" height="40"> Kyber
 
 What the household apps share, in one copy.
 
@@ -57,8 +55,10 @@ last step is how you find out it worked. The contract key by key is in
    Cloning a public repository over HTTPS needs no authentication, so nothing
    else is required: **no secret, no deploy key, no token, anywhere.** A
    consumer that had one for a previously private kyber can delete it, and the
-   way to verify is to delete it and run CI, not to stop referencing it. A developer who prefers SSH for everything can map it
-   globally instead of changing the URL, which would break the platforms above:
+   way to verify is to delete it and run CI, not to stop referencing it.
+
+   A developer who prefers SSH for everything can map it globally instead of
+   changing the URL, which would break the platforms above:
 
    ```sh
    git config --global url."git@github.com:".insteadOf "https://github.com/"
@@ -207,6 +207,7 @@ kyber/
   README.md
   LICENSE                    MIT, the same as every consumer
   icon.svg                   the crystal, hand-drawn, no build step
+  icon.png                   512 px render of it, for anywhere that needs a raster
   stack.json                 declared versions, one per shared tool
   docs/                      the rules that travel (Spanish, as written)
     publicar.md              publishing is authorised, and what replaces the permission
@@ -235,8 +236,10 @@ The icon is a kyber crystal, which is where the name comes from: the part that
 makes the thing work, shared by every blade that carries one. It is a single
 hand-written SVG with no build step, drawn to hold up from 16 px to a banner and
 on either a light or a dark background — checked by rendering it at both, not by
-reading the file. Rasterise it with
-`rsvg-convert -w 512 icon.svg -o icon.png` if somewhere needs a PNG.
+reading the file. `icon.png` beside it is a 512 px render, for anywhere that
+cannot take an SVG — GitHub's social preview, for one, which is uploaded by
+hand. Regenerate it with `rsvg-convert -w 512 icon.svg -o icon.png`: the SVG is
+the source and the PNG follows it.
 
 kyber is public and MIT-licensed, like the apps that consume it. It holds no
 credentials and names no consumer, which is what makes publishing it free of
