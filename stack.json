@@ -1,0 +1,18 @@
+{
+  "$comment": "The stack every consumer declares. `value` is the exact string a consumer's manifest, catalog, workflow or project.yml must carry; `required: false` marks tools a consumer may not use at all (a consumer that DOES use one must match). Read by each consumer's stack-agrees test, not by any script in kyber.",
+  "pnpm": { "value": "11.4.0", "required": true },
+  "node": { "value": "22", "required": true },
+  "java": { "value": "21", "required": true },
+  "typescript": { "value": "^5.9.3", "required": true },
+  "vitest": { "value": "^4.1.11", "required": true },
+  "firebase": { "value": "^12.19.0", "required": true },
+  "firebase-tools": { "value": "^15.30.0", "required": true },
+  "firebase-admin": { "value": "^14.4.0", "required": true },
+  "@types/node": { "value": "^24.13.3", "required": true },
+  "swift": { "value": "5.10", "required": true },
+  "firebase-ios-sdk": { "value": "12.0.0", "required": true },
+  "GoogleSignIn-iOS": { "value": "9.0.0", "required": true },
+  "next": { "value": "16.3.4", "required": false },
+  "react": { "value": "^19.3.0", "required": false },
+  "tailwindcss": { "value": "^4.3.3", "required": false }
+}

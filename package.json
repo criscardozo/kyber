@@ -1,0 +1,24 @@
+{
+  "name": "kyber",
+  "private": true,
+  "type": "module",
+  "description": "What the household apps share: scripts that read the consumer's .kyber/config.json, the working rules that travel, and the declared stack.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "for f in scripts/*.mjs scripts/lib/*.mjs test/*.mjs; do node --check \"$f\" || exit 1; done"
+  },
+  "peerDependencies": {
+    "firebase-admin": ">=14",
+    "firebase-tools": ">=15",
+    "vitest": ">=4"
+  },
+  "peerDependenciesMeta": {
+    "firebase-admin": { "optional": true },
+    "firebase-tools": { "optional": true },
+    "vitest": { "optional": true }
+  }
+}
