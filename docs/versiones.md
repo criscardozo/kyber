@@ -26,8 +26,16 @@
 
   **El orden importa:** mover la versión → regenerar lo que se genera
   (`xcodegen`, porque los `Info.plist` salen del `project.yml`) → commit →
-  `git tag -a` → `git push --follow-tags`. Sin `--follow-tags` el tag se queda
-  local, que es la forma más fácil de creer que taggeaste.
+  `git tag -a` → `git push --follow-tags`.
+
+  **Parar un paso antes es la falla fácil, y tiene dos formas distintas.** Sin
+  `xcodegen`, la versión queda correcta en el `project.yml` y falsa en el
+  bundle: la guarda de versiones pasa y el teléfono muestra el número viejo.
+  Sin `--follow-tags`, el tag se queda local, que es creer que taggeaste. El
+  script que mueve la versión no puede hacer ninguno de los dos pasos por vos
+  —uno necesita una herramienta que CI no tiene, el otro publica—, pero sí
+  puede **imprimir los que faltan al terminar**, que es lo que lo convierte en
+  un procedimiento en vez de una intención.
 
 - **La guarda tiene que distinguir dos fallas que se parecen**, y si no las
   distingue no sirve en ningún caso:
