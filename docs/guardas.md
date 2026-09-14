@@ -143,6 +143,19 @@ midiendo, en las dos apps, y por eso viajan juntas.
   el momento en que no te acordás.** Ninguno de los dos falló por no saberla.
   Lo que lo cambia no es cuidado sino construcción: el chequeo colgado del hook
   o del `&&`, donde la acción no puede ocurrir sin él.
+
+  Y encadenar arregla el **cuándo**, no el **qué mira**: *un chequeo corrido
+  contra un árbol distinto del que se va a publicar no es el mismo chequeo.* La
+  misma forma apareció tres veces en un día. Un pin verificado antes del commit
+  que movía el puntero, así que vio el par viejo, que coincidía. Un hook corrido
+  a mano antes de `git add`, que no se veía a sí mismo porque `git grep` sólo
+  lee lo trackeado. Y dos barridos que **afirmaban completitud sobre el repo**
+  leyendo también sólo lo trackeado — de modo que un archivo nuevo con un puerto
+  repetido o un identificador mal escrito pasaba en verde, que es exactamente
+  cuando ese archivo existe: lo escribís, corrés la suite, la stageás después.
+  Un barrido que dice conocer «todos los archivos» lee el filesystem o pide
+  `--untracked`, y sigue respetando las reglas de ignorado: uno que empieza a
+  leer dependencias se afloja en el día.
 - **Una edición que no encuentra su anclaje no cambia nada, y no lo dice.** Un
   script de reemplazo sin una afirmación de que el patrón existe devuelve el
   archivo intacto y sale con éxito, así que el commit se hace igual y su mensaje
