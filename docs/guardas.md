@@ -36,6 +36,11 @@ midiendo, en las dos apps, y por eso viajan juntas.
   no puede contradecirla — otra medición que no puede dar el resultado
   contrario. Cuando la cosa real está en el disco, se lee entera o se corre
   ella, no una versión de ella.
+
+  Y la causa primera fue anterior: **un grep contesta con lo que su filtro deja
+  pasar.** El patrón usado dejó afuera la línea que desarmaba el trap, y la
+  respuesta estaba además en la cabecera del archivo, que nunca se abrió. Un
+  grep sirve para encontrar dónde mirar; no sustituye leer lo que encontró.
 - **Elegir un fixture es afirmar cuál es la dimensión que importa, y ésa es una
   afirmación aparte.** «Un fixture CommonJS reproduce esto, uno ESM no» tiene
   dos mitades: que el bug depende del sistema de módulos, y que **no depende de
