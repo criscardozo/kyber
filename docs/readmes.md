@@ -56,6 +56,15 @@ puede es cambiar este orden ni saltearse la tabla.
 
 ## El ícono
 
+- **La `src` es una ruta relativa a un archivo commiteado en el repo. Nunca una
+  URL raw.** Las dos se ven idénticas en GitHub y distintas en todo lo demás: un
+  README abierto en el editor, en un fork, en una copia sin red o en cualquier
+  renderizador que no sea GitHub muestra la relativa y falla con la raw. Además
+  una raw apunta a una rama o a un sha: la primera se rompe si se renombra la
+  rama, el segundo congela el ícono en la versión de ese día.
+- **El archivo vive donde el proyecto ya lo tiene**, no en una carpeta nueva
+  para el README. Si la app ya guarda su ícono en algún lado, la `src` apunta
+  ahí; sólo si no existe ninguno se agrega uno.
 - **Sale del mismo artefacto que usa la app.** Si iOS tiene un `appicon`, el
   del README se escala desde ése. Así el README y la pantalla de inicio no
   pueden discrepar sobre cómo se ve la app: no hay dos originales.

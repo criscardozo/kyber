@@ -59,6 +59,21 @@ midiendo, en las dos apps, y por eso viajan juntas.
   y tolerada, las dos salidas son eliminar la condición que la produce, o una
   guarda que falle cuando algo empiece a depender de lo que no está; el paso de
   lectura escrito en un documento es la más débil de las tres.
+- **Si el observable es idéntico en el caso sano y en el roto, no es el
+  observable.** Medido subseteando una tipografía de íconos: la guarda que
+  sostenía la lista pasó en verde con la pantalla visiblemente rota, porque un
+  ícono fuera del subset se dibuja como la palabra y `innerText` **devuelve esa
+  palabra igual en los dos mundos**. Lo encontró abrir la página. El chequeo
+  que sirve mide otra cosa: el **ancho** del elemento, que en un ícono es del
+  orden del `font-size` y en una palabra es varias veces más — el control dio
+  247 px contra 19 de `font-size`. Antes de escribir una sonda, preguntarse qué
+  valor devuelve cuando la cosa está rota; si es el mismo, la sonda no existe.
+- **Un encabezado le presta su afirmación a todo lo que cuelga de él.** Una
+  lista titulada «lo que este proyecto tomó de aquél» le atribuye esa
+  procedencia a cada ítem, incluidos los que nadie tomó de ahí. Al verificar
+  una lista, verificar también lo que el título afirma sobre ella: apareció un
+  ítem que no había caducado, **había nacido falso**, y nadie lo había escrito
+  como afirmación en ningún lado — lo afirmaba el encabezado por él.
 - **Una frase escrita con seguridad sobrevive más que un bug**, porque nada la
   ejecuta. Lo que se afirma en un comentario o en un doc se mide, no se relee;
   y si no se midió, se escribe como creencia, separada de lo medido.
