@@ -39,11 +39,17 @@ last step is how you find out it worked. The contract key by key is in
    git submodule add https://github.com/criscardozo/kyber.git kyber
    ```
 
-   HTTPS and not SSH: Vercel clones private submodules only over HTTPS, and on
-   an SSH URL it warns and carries on — so the deploy stays green with the
-   submodule missing, which is the failure you find out about last. If your own
-   GitHub access is SSH-only, map it once and globally instead of changing the
-   URL:
+   HTTPS and not SSH, **and** the deploy platform's GitHub App needs access to
+   kyber's repository as well as the consumer's. Both halves are required and
+   the second is the one that gets forgotten: HTTPS alone was measured failing
+   on a real deploy. A private submodule it cannot read is reported as one
+   `Warning: Failed to fetch one or more git submodules` line and the build
+   **carries on** — the deploy goes green with the submodule absent. Nothing
+   notices while the bundle imports nothing from kyber, which is exactly how it
+   survives to the day something does.
+
+   If your own GitHub access is SSH-only, map it once and globally rather than
+   changing the URL:
 
    ```sh
    git config --global url."git@github.com:".insteadOf "https://github.com/"
@@ -151,10 +157,15 @@ last step is how you find out it worked. The contract key by key is in
     FIRESTORE_EMULATOR_HOST=127.0.0.1:<your port> pnpm restore backups/<the file it wrote>
     ```
 
-    A backup nobody has read back is a hope, so the round trip is the real
-    acceptance test: seed, back up, wipe, check the wipe left nothing, restore,
-    compare. Make the comparison fail once on purpose before trusting one that
-    passes.
+    Then two that no command reports:
+
+    - **Read the log of the first deploy after adding `.gitmodules`**, and
+      check it does not say `Failed to fetch one or more git submodules`. This
+      is the only failure in the whole adoption that changes the colour of
+      nothing: the deploy is green either way, so the status cannot tell you.
+    - **Run the round trip.** A backup nobody has read back is a hope: seed,
+      back up, wipe, check the wipe left nothing, restore, compare. Make the
+      comparison fail once on purpose before trusting one that passes.
 
 ### What belongs in kyber
 

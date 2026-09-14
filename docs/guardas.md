@@ -35,6 +35,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   Antes de confiar en un comparador que dice OK, hacerlo fallar a propósito (un
   control positivo). Escribir la guarda **antes** de arreglar lo que va a
   guardar da ese control gratis: la primera corrida falla sola.
+- **Una afirmación falsa viaja pegada a una verdadera y le roba la firmeza.**
+  El caso medido: «elegí HTTPS porque funciona en los dos escenarios y SSH en
+  uno» era un argumento que se sostenía solo, y al lado se le agregó «con HTTPS
+  el problema desaparece», que era una predicción que nadie había medido. La
+  primera hizo sonar a la segunda igual de firme. Al escribir, separar la razón
+  que ya se tiene de la consecuencia que se espera, y marcar la segunda como lo
+  que es hasta medirla.
+- **La falla que no cambia el color de nada es la que hay que ir a buscar.** Un
+  submódulo privado que el deploy no puede clonar sale como una línea de
+  `Warning:` y el build sigue: verde, sin el submódulo. Ninguna guarda de
+  estado lo ve. Para esa clase, el paso de verificación es leer el log, y hay
+  que escribirlo como paso porque nadie lo hace por costumbre.
 - **Una frase escrita con seguridad sobrevive más que un bug**, porque nada la
   ejecuta. Lo que se afirma en un comentario o en un doc se mide, no se relee;
   y si no se midió, se escribe como creencia, separada de lo medido.
