@@ -67,6 +67,19 @@ midiendo, en las dos apps, y por eso viajan juntas.
   recorrer llevando cuál es el actual, y probarlo contra el archivo real y no
   contra un fixture cómodo: en estos proyectos hay claves a la misma
   indentación que los targets y ninguna lo es.
+- **Cuando dos cambios sólo son válidos juntos, la pregunta no es en qué orden
+  van sino por qué son dos commits.** Un valor declarado se movió en un repo y
+  en otro por separado, y se discutió largo cuál iba primero: los dos órdenes
+  dejaban la rama principal en rojo, uno nueve minutos. La salida no era una
+  secuencia, era **un solo commit** con las dos mitades. Razonar sobre el orden
+  da por sentado que son dos cosas, y esa premisa es la que no se examinó — la
+  pregunta traía adentro una respuesta sin verificar.
+- **Un costo afirmado como razón decide cosas y casi nunca se mide.** «Sería
+  muy lento» dejó los tests fuera de un hook durante meses; medido, la suite
+  entera tardaba un segundo y el hook completo tres. La frase estaba escrita
+  como regla y era una hipótesis, y lo que excluyó era justamente el chequeo
+  más valioso. Antes de que un «es caro» o «tarda demasiado» decida un diseño,
+  cronometrarlo una vez.
 - **Un total contesta «cuántos» a una pregunta que era «cuáles».** Un conteo
   sobrevive a una sustitución: sacá uno y agregá otro y el número no se mueve,
   mientras la cosa pasó a estar donde nadie la puso y falta donde alguien la
@@ -123,6 +136,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   llegaba a la única acción que importaba. Es la misma forma que correr la
   suite, verla roja y pushear: **la verificación tiene que estar encadenada a
   lo que autoriza**, no simplemente ocurrir antes.
+
+  Y el corolario, porque las dos sesiones que escribieron esta regla la
+  rompieron el mismo día, cada una después de escribirla: **una regla que uno
+  puede recitar sigue dependiendo de acordarse en el momento exacto, y ése es
+  el momento en que no te acordás.** Ninguno de los dos falló por no saberla.
+  Lo que lo cambia no es cuidado sino construcción: el chequeo colgado del hook
+  o del `&&`, donde la acción no puede ocurrir sin él.
 - **Una edición que no encuentra su anclaje no cambia nada, y no lo dice.** Un
   script de reemplazo sin una afirmación de que el patrón existe devuelve el
   archivo intacto y sale con éxito, así que el commit se hace igual y su mensaje

@@ -249,6 +249,22 @@ What that centralisation does not do is turn a pointer bump into consent:
 
 ## Working on kyber
 
+```sh
+git config core.hooksPath .githooks   # once per clone
+```
+
+The hook runs `node --check` over every script and the whole suite before each
+push. It exists because running them by hand worked right up until the commit
+whose message described an edit that had failed its own assertion: the check
+had happened, it was simply not what the push depended on. Both finish in
+under a second, measured — the usual reason for keeping tests out of a hook is
+a guess about how long they take.
+
+It deliberately does NOT grep for consumer names. The first version did, and
+rejected the commit installing it: to grep for a consumer's ids and ports the
+hook had to contain them, and this repo may not. That check is each
+consumer's, with its own list.
+
 Run the suite in BOTH layouts: a standalone clone and a checkout inside a
 consumer. They are not the same environment, and a test that assumed the first
 passed here while failing for a consumer that had just added the submodule.
