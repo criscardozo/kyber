@@ -74,6 +74,21 @@ midiendo, en las dos apps, y por eso viajan juntas.
   secuencia, era **un solo commit** con las dos mitades. Razonar sobre el orden
   da por sentado que son dos cosas, y esa premisa es la que no se examinó — la
   pregunta traía adentro una respuesta sin verificar.
+- **Dos revisores con el mismo marco no son dos revisores.** Es el límite del
+  método, y salió midiéndolo: dos sesiones discutieron largo **en qué orden**
+  iban dos commits, y ninguna preguntó por qué eran dos — el orden correcto era
+  no separarlos. No fue que una se equivocara y la otra no mirara; **las dos
+  aceptaron la premisa que venía adentro de la pregunta**. Revisarse entre sí
+  atrapa lo que el otro no vio, no lo que los dos dan por sentado. Contra eso
+  sirve una sola cosa: volver a la pregunta y preguntarse qué está afirmando
+  antes de contestarla.
+- **Una guarda que reclama más de lo que hace es peor que ninguna.** Al
+  instalar una, decir **qué de lo que ya pasó habría atrapado**, contado. De
+  tres fallos reales, un hook habría parado uno: los otros dos fueron un job
+  al que le faltaba el submódulo —invisible en local— y un verde obtenido de un
+  árbol con un parche que no se publicó. Escribir «uno de tres» en la cabecera
+  vale más que la lista de lo que corre, porque es lo único que dice cuánto
+  confiar.
 - **Un costo afirmado como razón decide cosas y casi nunca se mide.** «Sería
   muy lento» dejó los tests fuera de un hook durante meses; medido, la suite
   entera tardaba un segundo y el hook completo tres. La frase estaba escrita

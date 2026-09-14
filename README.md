@@ -317,10 +317,13 @@ out not to qualify for reasons nobody had guessed:
 - **The reusable backup workflow is in**, approved. It was byte-identical in
   both consumers apart from two sentences of comment.
 
-The **pre-push hook** is not here and does not qualify yet: only one consumer
-has one at all — no `.githooks`, no husky and no `core.hooksPath` in the other
-— so it is earned in one. The version bump and the PWA check came in once both
-had them.
+The **pre-push hook** is now earned in two — both consumers have one, and so
+does this repo — and it still does not come in, under the second clause of the
+filter. What they share is a for-loop: run these commands in order, stop at
+the first failure. The commands themselves are each consumer's, one of them
+already reading its list from `prePush` in `.kyber/config.json`, and the file
+has to exist locally in each repo anyway because that is how git finds it.
+Fifteen lines of shared body do not pay for a fourth place to look.
 
 Browser-side code is now possible too, since a public submodule is really
 there at build time. The first candidate that passes the filter is the theme
