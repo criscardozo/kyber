@@ -27,6 +27,24 @@ midiendo, en las dos apps, y por eso viajan juntas.
   remedio no es desconfiar del que reenvía: es que **quien va a actuar sobre el
   dato lo lea**. Cuando la fuente está en el disco, eso cuesta un comando; el
   que no lo corre está eligiendo la versión de segunda mano.
+- **Elegir un fixture es afirmar cuál es la dimensión que importa, y ésa es una
+  afirmación aparte.** «Un fixture CommonJS reproduce esto, uno ESM no» tiene
+  dos mitades: que el bug depende del sistema de módulos, y que **no depende de
+  nada más**. Sólo la primera se piensa. La segunda era falsa: dependía de si la
+  exportación era un objeto o una función, un nivel más abajo.
+- **Un fixture puede reproducir el mecanismo y no la forma.** El arreglo
+  preguntaba si `default` era un **objeto**; el test pasó porque el fixture
+  exportaba un objeto, y el paquete real exporta una **función** con las
+  exportaciones colgadas como propiedades. La pregunta al escribirlo no es «¿es
+  del mismo tipo de cosa?» sino **«¿tiene la misma forma que la que falla?»**, y
+  si la real está instalada, correrlo contra ella una vez contesta las dos sin
+  razonar ninguna.
+- **Cambiar cómo se importa algo cambia su forma, no sólo de dónde viene.** Un
+  `import` estático de un paquete CommonJS hace que Node analice el archivo y
+  sintetice los nombres; el `import()` dinámico de la ruta ya resuelta no. El
+  mismo paquete, el mismo código llamador, y una propiedad que pasa a ser
+  `undefined` con un `TypeError` que no menciona módulos. Ninguna lectura del
+  archivo lo muestra.
 - **Un patrón que atraviesa una estructura que no entiende contesta sobre otra
   cosa.** Un regex de varias líneas desde una clave hasta la próxima
   coincidencia cruza límites de bloque, y le atribuyó a un target la versión de
@@ -67,6 +85,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   pregunta no es *¿falló?* sino *¿falló el que corresponde?* Una guarda que se
   pone verde con un arreglo parcial es peor que ninguna, porque tiene forma de
   haber funcionado.
+- **Verificar un estado y publicar otro no es verificar.** El caso: encontrar el
+  bug parchando el árbol de trabajo, confirmar que pasa **con** el parche,
+  revertirlo y publicar — con lo que lo medido y lo entregado difieren
+  exactamente en la línea bajo prueba. Misma forma que leer `$?` después de un
+  pipe: el resultado que se lee no viene del objeto que se mandó. La pregunta es
+  **«¿esto que estoy midiendo es lo que va a correr?»**, y se contesta mirando
+  el árbol, no la memoria.
+- **Una edición que no encuentra su anclaje no cambia nada, y no lo dice.** Un
+  script de reemplazo sin una afirmación de que el patrón existe devuelve el
+  archivo intacto y sale con éxito, así que el commit se hace igual y su mensaje
+  describe una regla que nunca llegó. Pasó acá, con este archivo, en el commit
+  que decía estar agregándole dos entradas. Todo reemplazo automático afirma
+  primero que el anclaje existe; sin eso es un barrido que puede no encontrar
+  nada, que es la primera regla de esta lista aplicada a las herramientas.
 - **Una medición que no puede dar el resultado contrario no es una medición.**
   Antes de confiar en un comparador que dice OK, hacerlo fallar a propósito (un
   control positivo). Escribir la guarda **antes** de arreglar lo que va a
