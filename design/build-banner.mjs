@@ -101,6 +101,9 @@ try {
     "(", cropped, ")", "-geometry", `+${x0}+${cy}`, "-composite",
     "(", word, ")", "-geometry", `+${x0 + cw + gap}+${wy}`, "-composite",
     "(", mask, ")", "-alpha", "off", "-compose", "CopyOpacity", "-composite",
+    // 8 bits per channel and no metadata: ImageMagick defaults to 16-bit here,
+    // which quadrupled the file for a gradient nobody can see the difference in.
+    "-depth", "8", "-strip",
     OUT,
   ]);
   console.log(`banner.png  ${W}x${H}  mark ${cw}x${ch}  word ${ww}x${wh}`);
