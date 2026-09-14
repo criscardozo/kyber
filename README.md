@@ -318,8 +318,11 @@ out not to qualify for reasons nobody had guessed:
   colours needs the parse test with it. Radii are a second job, not more of
   the same: one consumer names them by ROLE and the other by VALUE — `card`
   and `sheet` against `r18` — which is a real choice with a cost each way, and
-  on iOS one consumer has no radius tokens at all, only thirteen raw numbers.
-  There, emitting radii CREATES the tokens rather than replacing them.
+  on iOS one consumer has no radius tokens at all, only bare numbers. There,
+  emitting radii CREATES the tokens rather than replacing them. And if it ever
+  rewrites sizes, it must not round to the most-used neighbour: what decides
+  where a value collapses is the function that consumes it, not how often each
+  candidate appears (see `docs/guardas.md`).
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it
   in CI with a diff, the other writes the palette twice and has a test

@@ -91,6 +91,31 @@ midiendo, en las dos apps, y por eso viajan juntas.
   a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
   Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
   marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **Un conteo absorbe el error sin verse mal.** Tercera vez que un comentario
+  se cuela en un parseo, y la primera que no falla ruidosamente: las anteriores
+  devolvieron un bloque equivocado y una guarda marcándose a sí misma; ésta
+  devolvió **16 en vez de 15**, que es un número perfectamente plausible. Lo
+  delató que el diff tuviera exactamente una línea y que alguien fuera a ver
+  cuál. Si el archivo hubiera nacido con ese comentario, el 16 quedaba escrito
+  como dato para siempre. **Una salida que no puede verse rota necesita otra
+  cosa que mirarla**: para un cambio masivo, comparar un multiconjunto
+  estructurado antes y después —(archivo, tipo, argumentos), 124 contra 124—
+  en vez de contar. Un rename es seguro cuando se midió que nada se movió, no
+  cuando el total coincide.
+- **Al colapsar valores decide el mecanismo que los consume, no su
+  frecuencia.** Dos tamaños tipográficos a medio píxel de distancia se
+  unificaron, y el destino no lo eligió el conteo: la función que mapea tamaño
+  a estilo corta en `..<15`, así que bajar a 14 conserva el escalado con el que
+  esas etiquetas ya crecen y subir a 15 las movía de una categoría a otra sin
+  que nada lo dijera. Por conteo ganaba subir. **Redondear al vecino más usado
+  es exactamente el error que un generador cometería**, porque el conteo no
+  sabe qué hace el consumidor con el número.
+- **Una guarda no puede fallar por una decisión que nadie tomó.** Al unificar,
+  siete tamaños quedaron distintos entre plataformas por desacuerdo de **rol**
+  —un título de pantalla más grande en una que en otra— y no por deriva. La
+  guarda falla por la deriva y deja pasar los roles a propósito: una que
+  fallara por los roles estaría **afirmando una respuesta que nadie dio**, y
+  obligaría a inventarla para ponerla en verde.
 - **Quien parsea un archivo tiene que decidir explícitamente qué hace con los
   comentarios.** El default —tratarlos como código— falla en silencio, y el
   silencio se lee como que anduvo. Un `index()` de `@theme` sobre una hoja de
@@ -101,6 +126,14 @@ midiendo, en las dos apps, y por eso viajan juntas.
   habría vuelto incorrecta sin ninguna señal. Es la misma forma que la guarda
   cuyo comentario deletreaba un puerto vivo, del otro lado: **un patrón adentro
   de un comentario no es la cosa que el patrón nombra.**
+
+  Y sacarlos se hace **por línea, no con un regex sobre el texto**: uno que se
+  come todo lo que sigue a `//` se come el medio de una URL adentro de un
+  string, y en estos repos hay veinticinco. Descartar las líneas cuyo primer
+  carácter no-blanco abre un comentario no puede hacer eso. Queda el hueco del
+  comentario al final de una línea de código, y **se deja escrito como hueco
+  conocido** en vez de taparlo con algo que produce falsos positivos adentro de
+  strings.
 - **Un generador que emite strings mueve el fallo al parseo, y ahí muere en
   silencio.** Pasar un color de `0xF4F4F4` a `"#F4F4F4"` cambia un error de
   compilación por uno de runtime: el parser de hex de la plataforma **no
