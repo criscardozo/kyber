@@ -92,13 +92,17 @@ git submodule add https://github.com/criscardozo/kyber.git kyber
 git submodule update --init
 ```
 
-The submodule URL is HTTPS, and the deploy platform's GitHub App must also be
-granted access to kyber's repository. Both are needed: HTTPS alone was measured
-failing on a real deploy. A private submodule the platform cannot read produces
-one `Warning: Failed to fetch one or more git submodules` line and the build
-continues, so the deploy is green with the submodule absent — invisible until
-something in the bundle imports from kyber. Read the log of the first deploy
-after adding `.gitmodules`; the status cannot tell you.
+The submodule URL is HTTPS: a build container has no SSH key, and CI fetches
+kyber in a step of its own.
+
+Vercel deploys a submodule only when it is publicly reachable over HTTP. A
+private one fails at the clone step by documented design, and granting the
+Vercel GitHub App access to kyber's repository does not change that — measured
+with the App already on *All repositories*. The result is one
+`Warning: Failed to fetch one or more git submodules` line, an empty `kyber/`,
+and a green deploy. While kyber is private, nothing the deployed bundle imports
+may come from it; scripts, tests, hooks and CI are unaffected, because they run
+where the submodule really is.
 
 A developer whose GitHub access is SSH-only maps it once, globally:
 

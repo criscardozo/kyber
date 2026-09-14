@@ -41,12 +41,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   el problema desaparece», que era una predicción que nadie había medido. La
   primera hizo sonar a la segunda igual de firme. Al escribir, separar la razón
   que ya se tiene de la consecuencia que se espera, y marcar la segunda como lo
-  que es hasta medirla.
+  que es hasta medirla. Y al corregir una, **medir el reemplazo**: la primera
+  corrección de este mismo párrafo dijo «hay que darle acceso a la app del
+  deploy», que sonaba a diagnóstico y era otra predicción sin medir — lo
+  documentado es que un submódulo privado no se clona con ningún permiso. La
+  forma se repite justo cuando uno se siente escarmentado.
 - **La falla que no cambia el color de nada es la que hay que ir a buscar.** Un
   submódulo privado que el deploy no puede clonar sale como una línea de
   `Warning:` y el build sigue: verde, sin el submódulo. Ninguna guarda de
-  estado lo ve. Para esa clase, el paso de verificación es leer el log, y hay
-  que escribirlo como paso porque nadie lo hace por costumbre.
+  estado lo ve, y leer el log sólo ayuda el día que alguien se acuerda. Cuando
+  la falla es permanente y tolerada, lo que corresponde no es un paso de
+  lectura sino una guarda que falle si algo del bundle empieza a depender de lo
+  que no está.
 - **Una frase escrita con seguridad sobrevive más que un bug**, porque nada la
   ejecuta. Lo que se afirma en un comentario o en un doc se mide, no se relee;
   y si no se midió, se escribe como creencia, separada de lo medido.

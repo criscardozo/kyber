@@ -39,14 +39,23 @@ last step is how you find out it worked. The contract key by key is in
    git submodule add https://github.com/criscardozo/kyber.git kyber
    ```
 
-   HTTPS and not SSH, **and** the deploy platform's GitHub App needs access to
-   kyber's repository as well as the consumer's. Both halves are required and
-   the second is the one that gets forgotten: HTTPS alone was measured failing
-   on a real deploy. A private submodule it cannot read is reported as one
-   `Warning: Failed to fetch one or more git submodules` line and the build
-   **carries on** — the deploy goes green with the submodule absent. Nothing
-   notices while the bundle imports nothing from kyber, which is exactly how it
-   survives to the day something does.
+   HTTPS and not SSH: a build container has no SSH key, and CI fetches kyber
+   with its own step (point 8), so an SSH URL only breaks things.
+
+   **Know the ceiling before you lean on the submodule.** Vercel deploys a
+   submodule only when it is publicly reachable over HTTP; a private one fails
+   at the clone step, and this is documented product behaviour, not a
+   misconfiguration. Granting the Vercel GitHub App access to kyber's
+   repository does **not** fix it — measured here, with the App already on
+   *All repositories*. What you get is one
+   `Warning: Failed to fetch one or more git submodules` line, an empty
+   `kyber/`, and a build that carries on to a **green deploy**.
+
+   So while kyber is private: nothing the deployed bundle imports may come
+   from kyber. Scripts, tests, hooks and CI are fine — they run where the
+   submodule is really there. If a deployed app ever needs to import from
+   kyber, the submodule is the wrong shape for it: make kyber public, or ship
+   it as a private dependency.
 
    If your own GitHub access is SSH-only, map it once and globally rather than
    changing the URL:
@@ -159,10 +168,12 @@ last step is how you find out it worked. The contract key by key is in
 
     Then two that no command reports:
 
-    - **Read the log of the first deploy after adding `.gitmodules`**, and
-      check it does not say `Failed to fetch one or more git submodules`. This
-      is the only failure in the whole adoption that changes the colour of
-      nothing: the deploy is green either way, so the status cannot tell you.
+    - **Read the log of the first deploy after adding `.gitmodules`.** While
+      kyber is private the warning WILL be there and the deploy will be green
+      anyway, so what you are checking is that nothing in the deployed bundle
+      needed the directory that is now empty. A guard that fails when anything
+      the bundle imports reaches into `kyber/` is worth more than this reading,
+      because the reading only happens when somebody remembers.
     - **Run the round trip.** A backup nobody has read back is a hope: seed,
       back up, wipe, check the wipe left nothing, restore, compare. Make the
       comparison fail once on purpose before trusting one that passes.
