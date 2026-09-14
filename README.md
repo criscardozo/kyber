@@ -1,33 +1,63 @@
-# <img src="icon.svg" alt="" height="40"> Kyber
+<h1 align="center">
+  <img src="icon.svg" alt="" width="44" align="middle">
+  Kyber
+</h1>
 
-What the household apps share, in one copy.
+The shared layer for three household apps by the same author, on the same stack
+— SwiftUI on iOS with a widget and a watch app, Next.js on the web, Firebase on
+the Spark free tier, GitHub Actions on Linux only — which kept growing the same
+scripts and the same working rules in parallel and letting them drift. Consumed
+as a git submodule: one copy, never a synchronised one. Two rules decide what
+gets in, and between them they explain every choice below: it has to be
+**earned in two** of the apps, and it may **never carry product identity**.
 
-Three apps by the same author — the same house, the same stack (iOS with a
-widget and a watch app, Firebase with emulators, a web app, GitHub Actions on
-the free tier) — kept growing the same scripts and the same working rules in
-parallel, and letting them drift. kyber is the part that is common. The filter
-for getting in: it must be shared by the apps AND already earned in two of
-them. Never product identity: no design tokens, no project id, no schema, no
-Firestore rules.
+| | |
+|---|---|
+| 📜 Rules | `docs/` — the working rules that travel, in Spanish as written. Each consumer imports them into its `CLAUDE.md`, so these are instruction, not only prose |
+| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, and a rules-test runner that finds a free port. Each reads the consumer's own `.kyber/config.json` |
+| 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
+| 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
+| 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
+| 💎 Icon | `icon.svg` — the crystal, hand-drawn; `icon.png` is a 512 px render of it |
 
-## How it is consumed
+## What it does
 
-As a git submodule at `<consumer>/kyber/`. One copy, never a synchronised one.
+Holds the parts three sibling projects were each maintaining a copy of. The
+scripts run **from** the consumer and read `<consumer>/.kyber/config.json` for
+everything specific to it, so the same `backup.mjs` serves a project it has
+never heard of. The prose is imported with `@kyber/docs/<file>.md`, one file per
+rule, named rather than numbered, so each consumer keeps its own numbering and
+its own deltas beside the shared text.
 
-- Scripts are run from the consumer (`node kyber/scripts/backup.mjs`) and read
-  `<consumer>/.kyber/config.json` for everything consumer-specific. The
-  contract is in [docs/consumer-config.md](docs/consumer-config.md).
-- Prose is imported from the consumer's `CLAUDE.md` with
-  `@kyber/docs/<file>.md`. Each file is one working rule, named rather than
-  numbered, so a consumer keeps its own numbering and its own deltas.
-- `stack.json` declares the stack every consumer must agree with. It is read
-  by each consumer's own `stack-agrees` test against its catalog,
-  `packageManager`, workflows and `project.yml`; nothing in kyber reads it.
+What it deliberately does not do: it **names no consumer** — no project id, no
+port, no schema, no Firestore rules, no design tokens, not even an app's proper
+name; anything a script needs of that kind it is handed. It **installs
+nothing** — `firebase-admin`, `firebase-tools` and `vitest` are peers resolved
+from the consumer's own `node_modules`, and a missing one is reported as a
+sentence naming who installs it rather than a resolution trace. And it **has no
+version of its own**: consumers pin the exact commit through the submodule
+gitlink, so there is nothing here to tag or release.
 
-After cloning a consumer: `git submodule update --init`. `pnpm install` does
-not do it.
+## Quick start
 
-## Adopting kyber in a new project
+```sh
+git submodule add https://github.com/criscardozo/kyber.git kyber
+git submodule update --init        # `pnpm install` does NOT do this
+
+# then, in the consumer: .kyber/config.json, and scripts wired to kyber/scripts/
+node kyber/scripts/backup.mjs      # dump to <consumer>/backups/
+node kyber/scripts/restore.mjs backups/<file>.json
+node kyber/scripts/check-rules-drift.mjs
+
+# working on kyber itself:
+pnpm check                         # node --check on every script and test
+pnpm test                          # node --test, nothing to install
+```
+
+The full wiring, step by step, is [below](#adopting-it-in-a-new-project); the
+contract key by key is in [docs/consumer-config.md](docs/consumer-config.md).
+
+## Adopting it in a new project
 
 For whoever wires up the next consumer, human or agent. Do it in order — the
 last step is how you find out it worked. The contract key by key is in
@@ -164,17 +194,6 @@ last step is how you find out it worked. The contract key by key is in
       back up, wipe, check the wipe left nothing, restore, compare. Make the
       comparison fail once on purpose before trusting one that passes.
 
-### What belongs in kyber
-
-- **In:** something these projects share AND that has already been earned in
-  two of them. One project's good idea is not shared yet; it is a proposal.
-- **Out:** anything that identifies a product — project ids, ports, schema,
-  Firestore rules, design tokens, an app's own name. A script that needs one
-  reads it from `.kyber/config.json`.
-- Extract on the second occurrence, not the first, and bring the reasoning
-  with the code. The comments explaining why a guard exists are most of what
-  is being shared.
-
 ## docs/ is executable instruction, not only prose
 
 Each consumer imports these files into its `CLAUDE.md` with
@@ -200,61 +219,29 @@ What that centralisation does not do is turn a pointer bump into consent:
   proposes it**, so whoever moves the pointer knows what they are moving. A
   bump that only changes how to work needs no ceremony.
 
-## Layout
+## Key invariants
 
-```
-kyber/
-  README.md
-  LICENSE                    MIT, the same as every consumer
-  icon.svg                   the crystal, hand-drawn, no build step
-  icon.png                   512 px render of it, for anywhere that needs a raster
-  stack.json                 declared versions, one per shared tool
-  docs/                      the rules that travel (Spanish, as written)
-    publicar.md              publishing is authorised, and what replaces the permission
-    costo-cero.md            zero spend, no exceptions
-    idiomas.md               languages
-    firestore-free-tier.md   the free tier is part of the design
-    codigo.md                code
-    datos.md                 data before screen
-    maquina.md               rules of the machine all three run on
-    secretos.md              secrets
-    versiones.md             what `major` means
-    guardas.md               verify, do not assume; a guard is code too
-    consumer-config.md       the consumer contract (English: it documents code)
-  scripts/
-    backup.mjs               Admin SDK dump to <consumer>/backups/
-    restore.mjs              the dump back into the emulator or, guarded, production
-    check-rules-drift.mjs    are the deployed rules the ones in the repo?
-    run-rules-tests.mjs      the rules suite on a port that is actually free
-    lib/                     consumer root and config, credentials, dump codec
-  firebase/
-    vitest-rules.mjs         the vitest settings every rules suite shares
-  test/                      node --test, against a fixture consumer
-```
-
-The icon is a kyber crystal, which is where the name comes from: the part that
-makes the thing work, shared by every blade that carries one. It is a single
-hand-written SVG with no build step, drawn to hold up from 16 px to a banner and
-on either a light or a dark background — checked by rendering it at both, not by
-reading the file. `icon.png` beside it is a 512 px render, for anywhere that
-cannot take an SVG — GitHub's social preview, for one, which is uploaded by
-hand. Regenerate it with `rsvg-convert -w 512 icon.svg -o icon.png`: the SVG is
-the source and the PNG follows it.
-
-kyber is public and MIT-licensed, like the apps that consume it. It holds no
-credentials and names no consumer, which is what makes publishing it free of
-consequence — and what a consumer's own identity guard keeps true.
-
-kyber has no runtime dependencies. `firebase-admin`, `firebase-tools` and
-`vitest` are peers: they resolve from the consumer's own `node_modules`
-through Node's normal walk-up, and the scripts say so when one is missing.
+- **Earned in two, or it does not come in.** One project's good idea is not
+  shared yet; it is a proposal. Extract on the second occurrence, and bring the
+  reasoning with the code — the comments explaining why a guard exists are most
+  of what is being shared.
+- **Nothing here names a consumer.** Not in code, not in comments, not in prose,
+  and this README is not exempt. Each consumer verifies it from its own side
+  with its own list of needles, because that list is the consumer's identity;
+  a new commit is taken only when that check prints nothing.
+- **The consumer root is found by walking up to `.kyber/config.json`** — never
+  from `..`, which is one level off once the scripts live in a submodule and is
+  wrong without failing, and never from `git rev-parse --show-toplevel`, which
+  inside a submodule answers with kyber's own root.
+- **A dump is read back before it is trusted.** Timestamps are tagged rather
+  than flattened, because the flattened form makes a round trip that compares
+  equal while every audit field has changed type.
+- **kyber stays public.** A private submodule is not deployable — the platform
+  clones it only over public HTTP and a green deploy can hide an empty
+  directory — and it holds no credentials and names nobody, so there is nothing
+  publishing it could cost.
 
 ## Working on kyber
-
-```sh
-pnpm check   # node --check on every script and test
-pnpm test    # node --test, no install needed
-```
 
 Run the suite in BOTH layouts: a standalone clone and a checkout inside a
 consumer. They are not the same environment, and a test that assumed the first
@@ -266,11 +253,14 @@ consumer that has not opted in, tags in a legacy dump, a `$timestamp` with
 siblings, GeoPoint and Bytes in `serialize`, and a `"YYYY-MM-DD"` under a key
 ending in `At` staying a string.
 
-**kyber names no consumer**: not its project id, not its ports, not its
-proper name. That holds for prose and comments as much as for code, and this
-README is not exempt. Each consumer verifies it from its own side, with its own
-list of needles — that list is the consumer's identity, not kyber's — and a
-new kyber commit is taken only when that check prints nothing.
+The icon is a kyber crystal, which is where the name comes from: the part that
+makes the thing work, shared by every blade that carries one. `icon.svg` is
+hand-written with no build step, drawn to hold up from 16 px to a banner on
+either a light or a dark background — checked by rendering it at both, not by
+reading the file. `icon.png` is a 512 px render of it for anywhere that cannot
+take an SVG, GitHub's social preview among them; regenerate it with
+`rsvg-convert -w 512 icon.svg -o icon.png`. The SVG is the source and the PNG
+follows it.
 
 ## Not yet in kyber
 
@@ -286,3 +276,7 @@ consumers, with the palette and the storage key staying behind as identity.
 Anything moved there has to loosen each consumer's own guard against the bundle
 reaching into `kyber/` — deliberately, with the reason written down, never by
 deleting the guard.
+
+## License
+
+[MIT](LICENSE)
