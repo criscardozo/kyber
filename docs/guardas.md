@@ -116,6 +116,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   pipe: el resultado que se lee no viene del objeto que se mandó. La pregunta es
   **«¿esto que estoy midiendo es lo que va a correr?»**, y se contesta mirando
   el árbol, no la memoria.
+- **Afirmar el anclaje no alcanza si el commit no depende de la afirmación.**
+  El `assert` protegió el archivo —no escribió nada con el patrón equivocado— y
+  el commit se hizo igual, con un mensaje que describía el cambio que no había
+  entrado. Los pasos iban separados por `;` en vez de `&&`, así que el fallo no
+  llegaba a la única acción que importaba. Es la misma forma que correr la
+  suite, verla roja y pushear: **la verificación tiene que estar encadenada a
+  lo que autoriza**, no simplemente ocurrir antes.
 - **Una edición que no encuentra su anclaje no cambia nada, y no lo dice.** Un
   script de reemplazo sin una afirmación de que el patrón existe devuelve el
   archivo intacto y sale con éxito, así que el commit se hace igual y su mensaje

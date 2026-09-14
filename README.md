@@ -225,6 +225,12 @@ What that centralisation does not do is turn a pointer bump into consent:
   shared yet; it is a proposal. Extract on the second occurrence, and bring the
   reasoning with the code — the comments explaining why a guard exists are most
   of what is being shared.
+- **Earned in two is necessary and it is not sufficient.** What has to clear
+  the bar is the EXTRACTION, not the duplication: a config entry, an import
+  path, a guard somebody has to loosen, a second place to look when it breaks.
+  Fourteen identical lines do not pay for that. Neither do three
+  implementations of one idea that share no code — then what travels is the
+  practice, written down, and the implementations stay where they are.
 - **Nothing here names a consumer.** Not in code, not in comments, not in prose,
   and this README is not exempt. Each consumer verifies it from its own side
   with its own list of needles, because that list is the consumer's identity;
@@ -282,12 +288,9 @@ out not to qualify for reasons nobody had guessed:
   extracted — into `docs/readmes.md`, as rules. Sharing the code would mean
   rewriting the richest of the three to fit a signature that suits neither of
   the others well. The practice travelled; the implementation should not.
-- **The theme module passes the filter and is still not worth it.**
-  `applyTheme` and its preference type are genuinely the same fourteen lines in
-  two consumers. Against that: a config entry, an import path, and each
-  consumer deliberately loosening its guard against the bundle reaching into
-  `kyber/`. Fourteen lines do not pay for that. It goes in when something
-  bigger goes with it.
+- **The theme module passes the filter and is still not worth it**, which is
+  what put the second clause of the filter into words. It goes in when
+  something bigger goes with it.
 - **The design-token emitter does not, and not because one side lacks it.**
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it

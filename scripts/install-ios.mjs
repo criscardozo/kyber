@@ -94,14 +94,37 @@ function readProfile(path) {
 }
 
 async function main() {
+  // An argument that is not understood is refused, never ignored. The flag
+  // somebody types to ask "what does this do?" was running the whole
+  // procedure — profiles aside, build, install — which is the one thing
+  // `--help` means you do not want yet. Same rule as the version argument:
+  // what cannot be read is not resolved by doing the usual thing.
+  //
+  // And it happens BEFORE the config is read, so `--help` answers from
+  // anywhere. Asking what a command does should not require already being set
+  // up to run it.
+  const argv = process.argv.slice(2);
+  const USAGE =
+    "Usage: node kyber/scripts/install-ios.mjs [--device <udid-or-name>]\n" +
+    "  Builds, re-signs and installs on the phone. The device also comes from\n" +
+    '  IOS_DEVICE or "iosDevice" in .kyber/config.json.';
+  if (argv.includes("--help") || argv.includes("-h")) {
+    console.log(USAGE);
+    return;
+  }
+  const flag = argv.indexOf("--device");
+  const understood = new Set(flag === -1 ? [] : [argv[flag], argv[flag + 1]]);
+  const unknown = argv.filter((a) => !understood.has(a));
+  if (unknown.length > 0) {
+    throw new KyberError(`No entiendo ${unknown.join(" ")}.\n${USAGE}`);
+  }
+
   const { root, config, dir } = loadConsumer({ required: ["bundleId", "iosScheme"] });
   const iosDir = config.iosDir ? dir("iosDir") : join(root, "apps", "ios");
   const manifest = config.webManifest
     ? dir("webManifest")
     : join(root, "apps", "web", "package.json");
 
-  const argv = process.argv.slice(2);
-  const flag = argv.indexOf("--device");
   const device = flag !== -1 ? argv[flag + 1] : (process.env.IOS_DEVICE ?? config.iosDevice);
   if (device === undefined || device === "") {
     throw new KyberError(
