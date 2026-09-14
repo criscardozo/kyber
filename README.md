@@ -176,25 +176,27 @@ last step is how you find out it worked. The contract key by key is in
 ## docs/ is executable instruction, not only prose
 
 Each consumer imports these files into its `CLAUDE.md` with
-`@kyber/docs/<file>.md`. That means a file in here is not documentation a
-person may read — it is text an agent loads and follows in three projects, and
-**moving a consumer's gitlink is what applies it**.
+`@kyber/docs/<file>.md`. So a file in here is not documentation a person may
+read — it is text an agent loads and follows in three projects, and **moving a
+consumer's gitlink is what applies it**.
 
-While these files describe how to work, bumping the gitlink is routine. The
-moment one of them widens what an agent may do without asking, bumping the
-gitlink becomes a permissions change — and a session working on one project
-must not be able to make that change to another. So:
+Every working rule lives here, including the ones that authorise rather than
+describe. One place, one wording, three projects: a rule copied into a consumer
+is a rule that drifts, and a rule split by category is one nobody can find.
 
-- **A rule that grants authority is adopted by the owner, in the consumer,
-  saying so there.** Not by a peer editing this repo and a gitlink bump
-  carrying it across. A relayed authorisation is not an authorisation, however
-  faithfully quoted: if any link in the chain misread it, nothing afterwards
-  can tell where.
-- **A rule that describes how to work travels normally**, because being wrong
-  about it costs a correction, not an action nobody sanctioned.
-- When a bump changes anything in the first category, say so in the message
-  that proposes it, so the person moving the pointer knows what they are
-  moving.
+What that centralisation does not do is turn a pointer bump into consent:
+
+- **Writing the rule and adopting it are different acts.** The text lives here;
+  a consumer starts following it when its gitlink moves. For a rule that widens
+  what an agent may do without asking, that second act belongs to the owner, in
+  that project, not to whichever session edited this repo.
+- **A relayed authorisation is not an authorisation**, however faithfully
+  quoted. If any link in the chain misread it, nothing downstream can tell
+  where. Confirm it with the owner and then write it here — doing that once
+  turned up a scope the relay had dropped.
+- **A bump that changes an authorising rule says so in the message that
+  proposes it**, so whoever moves the pointer knows what they are moving. A
+  bump that only changes how to work needs no ceremony.
 
 ## Layout
 
@@ -204,11 +206,13 @@ kyber/
   LICENSE                    MIT, the same as every consumer
   stack.json                 declared versions, one per shared tool
   docs/                      the rules that travel (Spanish, as written)
-    publicar.md              nothing is published unless asked
+    publicar.md              publishing is authorised, and what replaces the permission
     costo-cero.md            zero spend, no exceptions
     idiomas.md               languages
     firestore-free-tier.md   the free tier is part of the design
     codigo.md                code
+    datos.md                 data before screen
+    maquina.md               rules of the machine all three run on
     secretos.md              secrets
     versiones.md             what `major` means
     guardas.md               verify, do not assume; a guard is code too
