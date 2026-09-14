@@ -71,14 +71,11 @@ own), a dump without `format` for a consumer that has not opted in, tags in a
 legacy dump, a `$timestamp` with siblings, GeoPoint and Bytes in `serialize`,
 and a `"YYYY-MM-DD"` under a key ending in `At` staying a string.
 
-Before a consumer takes a new commit, nothing in kyber may name a consumer:
-
-```sh
-git grep -nI -e "qcris-" -e "gastos-diarios" -e "demo-gastos" -e "demo-stock" -e "8390" -e "\bGastos\b" -e "\bStock\b"
-```
-
-must print nothing. (This README is the one place those strings appear, in
-the command that forbids them; exclude it with `-- ':!README.md'`.)
+**kyber names no consumer**: not its project id, not its ports, not its
+proper name. That holds for prose and comments as much as for code, and this
+README is not exempt. Each consumer verifies it from its own side, with its own
+list of needles — that list is the consumer's identity, not kyber's — and a
+new kyber commit is taken only when that check prints nothing.
 
 ## Not yet in kyber
 
