@@ -268,9 +268,20 @@ rsvg-convert -w 512 icon.svg -o icon.png     # icon.png, for GitHub's social pre
 
 ## Not yet in kyber
 
-Noted for later, once the consumers have converged on them: the design-token
-emitter, the iOS install script, and a reusable backup workflow (which needs an
-explicit OK, per the Actions rule).
+Measured against the filter rather than assumed, because two of these turned
+out not to qualify for reasons nobody had guessed:
+
+- **The iOS install script and the banner generator qualify now.** Both
+  consumers have one of each, so they are earned in two and are next.
+- **The design-token emitter does not, and not because one side lacks it.**
+  The two projects solved the same problem in opposite directions: one
+  generates the stylesheet and the Swift theme from a token file and proves it
+  in CI with a diff, the other writes the palette twice and has a test
+  comparing the copies. There is no intersection to extract — a strategy has to
+  be chosen first, and generating is the stronger one (see `docs/guardas.md`).
+  That is a migration in a consumer, so it is Cristian's call, not this repo's.
+- **A reusable backup workflow** still needs an explicit OK, per the Actions
+  rule.
 
 The **pre-push hook** is not here and does not qualify yet: only one consumer
 has one at all — no `.githooks`, no husky and no `core.hooksPath` in the other

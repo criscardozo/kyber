@@ -67,6 +67,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   **truncado**, contar líneas que matchean en vez de mirar a qué target
   pertenecen. Todas dan un número correcto sobre algo que no era la pregunta, y
   todas se sienten como una medición.
+- **Generar es más fuerte que comparar, y no es lo mismo aunque las dos den
+  verde.** Generar un archivo desde una fuente prueba que se puede
+  **reconstruir**: si alguien editó a mano el derivado, aparece como un diff.
+  Comparar dos copias prueba sólo que **coinciden** — si las dos se editan
+  igual, o si el valor correcto cambia y nadie toca ninguna, el test sigue en
+  verde para siempre. Es «una lista escrita a mano prueba lo que nombra, no que
+  nombre todo» aplicado a los valores. Medido: un color quedó por debajo del
+  mínimo de contraste en una sola plataforma durante meses, y lo que lo destapó
+  fue generar, no comparar. Cuando hay una fuente posible, la elección por
+  defecto es generar y verificar con un `diff` que falle.
 - **Comparar todo lo que hay no es comparar que esté todo.** Una lista escrita a
   mano sólo prueba que lo que nombra coincide. La lista se contrasta contra el
   árbol (los archivos, las colecciones raíz) y la guarda **nombra lo que
