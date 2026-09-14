@@ -9,7 +9,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { consumerRoot } from "./lib/consumer.mjs";
 import { KyberError, run } from "./lib/errors.mjs";
-import { kyberPins, pinProblems } from "./lib/pins.mjs";
+import { gitlinkFromIndex, kyberPins, pinProblems } from "./lib/pins.mjs";
 
 async function main() {
   const root = consumerRoot();
@@ -25,12 +25,34 @@ async function main() {
 
   let gitlink;
   try {
-    gitlink = execFileSync("git", ["rev-parse", "HEAD:kyber"], { cwd: root, encoding: "utf8" }).trim();
+    const out = execFileSync("git", ["ls-files", "-s", "kyber"], { cwd: root, encoding: "utf8" });
+    gitlink = gitlinkFromIndex(out);
   } catch {
+    gitlink = null;
+  }
+  if (gitlink === null) {
     throw new KyberError(
-      "Cannot read the submodule gitlink (`git rev-parse HEAD:kyber`).\n" +
-        "  Is kyber added as a submodule at ./kyber, and committed?",
+      "Cannot read the submodule gitlink (`git ls-files -s kyber`).\n" +
+        "  Is kyber added as a submodule at ./kyber?",
     );
+  }
+
+  // Informative, never fatal: the submodule can sit on a commit that is not
+  // the one about to be committed, and then what runs locally is not what CI
+  // will run. Saying so is useful; failing on it would be a second false
+  // positive in the place the first one was.
+  try {
+    const here = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: join(root, "kyber"), encoding: "utf8",
+    }).trim();
+    if (here !== gitlink) {
+      console.log(
+        `note: kyber/ is checked out at ${here.slice(0, 7)} but the index says ` +
+          `${gitlink.slice(0, 7)}. Locally you are running the first one.`,
+      );
+    }
+  } catch {
+    // No submodule checkout to compare against; the pins are still checkable.
   }
 
   const pins = files.flatMap((file) =>

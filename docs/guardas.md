@@ -27,6 +27,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   remedio no es desconfiar del que reenvía: es que **quien va a actuar sobre el
   dato lo lea**. Cuando la fuente está en el disco, eso cuesta un comando; el
   que no lo corre está eligiendo la versión de segunda mano.
+- **Simular lo que creés que hace el código prueba tu modelo, no el código.**
+  El caso: para saber si un `trap ... EXIT` se disparaba en una salida exitosa,
+  se escribió un script chico que reproducía el patrón y se lo corrió. Confirmó
+  la creencia. Pero el archivo real desarmaba el trap veinte líneas más abajo
+  (`trap - EXIT`), y su propio comentario de cabecera lo decía. La reproducción
+  es un proxy construido a partir de la creencia que se quería revisar, así que
+  no puede contradecirla — otra medición que no puede dar el resultado
+  contrario. Cuando la cosa real está en el disco, se lee entera o se corre
+  ella, no una versión de ella.
 - **Elegir un fixture es afirmar cuál es la dimensión que importa, y ésa es una
   afirmación aparte.** «Un fixture CommonJS reproduce esto, uno ESM no» tiene
   dos mitades: que el bug depende del sistema de módulos, y que **no depende de

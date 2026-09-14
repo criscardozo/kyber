@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { kyberPins, pinProblems } from "../scripts/lib/pins.mjs";
+import { gitlinkFromIndex, kyberPins, pinProblems } from "../scripts/lib/pins.mjs";
 
 const SHA = "e7b8f51a1b2c3d4e5f60718293a4b5c6d7e8f901";
 const OTHER = "0123456789abcdef0123456789abcdef01234567";
@@ -61,4 +61,18 @@ test("several workflows are all reported, not just the first", () => {
   assert.equal(problems.length, 2);
   assert.match(problems.join("\n"), /backup\.yml/);
   assert.match(problems.join("\n"), /ci\.yml/);
+});
+
+test("the gitlink comes from the index, so a staged bump is not a mismatch", () => {
+  // The reported false positive: bumping the submodule and the workflow
+  // together means staging a new gitlink while the workflow file is edited in
+  // the working tree. Reading HEAD:kyber calls that a mismatch — red in the
+  // middle of the exact operation the guard exists to keep honest.
+  const staged = `160000 ${SHA} 0\tkyber\n`;
+  assert.equal(gitlinkFromIndex(staged), SHA);
+});
+
+test("gitlinkFromIndex ignores ordinary files and reports nothing found", () => {
+  assert.equal(gitlinkFromIndex("100644 aaaa 0\tREADME.md\n"), null);
+  assert.equal(gitlinkFromIndex(""), null);
 });
