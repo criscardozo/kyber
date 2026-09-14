@@ -13,7 +13,7 @@ gets in, and between them they explain every choice below: it has to be
 | | |
 |---|---|
 | 📜 Rules | `docs/` — the working rules that travel, in Spanish as written. Each consumer imports them into its `CLAUDE.md`, so these are instruction, not only prose |
-| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, the offline PWA check, and the guard that keeps a consumer's two pointers at kyber in step. Each reads the consumer's own `.kyber/config.json` |
+| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, the offline PWA check, the build-sign-install run for the phone, and the guard that keeps a consumer's two pointers at kyber in step. Each reads the consumer's own `.kyber/config.json` |
 | 🔁 Workflow | `.github/workflows/backup.yml` — the weekly Firestore dump as a reusable workflow. The consumer keeps the schedule and calls it; the minutes are the caller's |
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
@@ -272,8 +272,9 @@ rsvg-convert -w 512 icon.svg -o icon.png     # icon.png, for GitHub's social pre
 Measured against the filter rather than assumed, because two of these turned
 out not to qualify for reasons nobody had guessed:
 
-- **The iOS install script and the banner generator qualify now.** Both
-  consumers have one of each, so they are earned in two and are next.
+- **The iOS install script is in.** Both consumers had one, with the same
+  guards found separately. The banner generator is next: three implementations
+  of one problem, in three languages, counting this repo's own.
 - **The design-token emitter does not, and not because one side lacks it.**
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it

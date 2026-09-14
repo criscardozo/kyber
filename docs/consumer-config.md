@@ -27,6 +27,10 @@ consumer can carry settings for a later batch before kyber reads them.
 | `firebaseDir` | path | all | Directory holding `firebase.json`, `firestore.rules`, `firestore.indexes.json` and the gitignored `service-account.json`. Relative to the consumer root. |
 | `rulesTestsDir` | path | run-rules-tests | The rules-tests workspace: `firebase-tools` and `vitest` resolve from there, and `vitest run` runs there. |
 | `restore.legacyIsoTimestamps` | boolean, optional | restore | `true` only for a consumer with real dumps from before the tagged format. Enables the legacy heuristic for dumps without a `format` field. Absent means the heuristic does not exist. |
+| `bundleId` | string | install-ios | The app's bundle identifier. Its provisioning profiles are matched on the identifier entitlement, exactly and by prefix — never as a substring. |
+| `iosScheme` | string | install-ios | The Xcode scheme, which also names the `.xcodeproj` and the built `.app`. |
+| `iosDevice` | string, optional | install-ios | Default device UDID or name. `--device` and `IOS_DEVICE` both win over it. |
+| `iosDir` | path, optional | install-ios | Where the Xcode project lives. Defaults to `apps/ios`. |
 | `iosTargets` | string[] | set-version | The NAMES of the iOS targets that carry the version. Names and not a count: a count survives a substitution. |
 | `webManifest` | path, optional | set-version | The web app's `package.json`. Defaults to `apps/web/package.json`. |
 | `iosProject` | path, optional | set-version | The XcodeGen project. Defaults to `apps/ios/project.yml`. |
@@ -60,6 +64,7 @@ anywhere in the consumer).
 | `restore.mjs` | the same, plus `restore.*` | Emulator by default (the consumer's own port, or `FIRESTORE_EMULATOR_HOST`), only ever a local host. `--production` refuses a dump from another project, a dump not read from production, and a set `FIRESTORE_EMULATOR_HOST`; then asks for the project id typed. |
 | `set-version.mjs` | iosTargets, webManifest, iosProject | Nothing. Refuses before writing if a named target is missing, if an unnamed one carries a version, or if any `CFBundleShortVersionString` is a literal instead of `$(MARKETING_VERSION)`. |
 | `verify-pwa.mjs` | the `pwa` block, webDir | `PWA_BASE_URL` overrides the host. Needs a PRODUCTION server already running: against a dev server the worker never registers and the check passes without testing anything. |
+| `install-ios.mjs` | bundleId, iosScheme, iosDir, iosDevice, webManifest | Sets the app's profiles aside, builds, and refuses to install unless the reissued signature has over a day left AND the built bundle shows the declared version. Puts the profiles back only when the build fails. |
 | `check-kyber-pins.mjs` | nothing | Compares every `uses: criscardozo/kyber/...@<sha>` in the consumer's workflows against `git rev-parse HEAD:kyber`. |
 | `check-rules-drift.mjs` | projectId, firebaseDir | `GOOGLE_APPLICATION_CREDENTIALS`. Exit 1 when the deployed ruleset differs from `firestore.rules`. |
 | `run-rules-tests.mjs` | name, rulesTestsProjectId, firebaseDir, rulesTestsDir | `FIRESTORE_EMULATOR_PORT` to pin a port (busy means stop, not move). |
