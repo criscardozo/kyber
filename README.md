@@ -1,3 +1,5 @@
+<img src="icon.svg" alt="A kyber crystal" width="104" align="right">
+
 # kyber
 
 What the household apps share, in one copy.
@@ -204,6 +206,7 @@ What that centralisation does not do is turn a pointer bump into consent:
 kyber/
   README.md
   LICENSE                    MIT, the same as every consumer
+  icon.svg                   the crystal, hand-drawn, no build step
   stack.json                 declared versions, one per shared tool
   docs/                      the rules that travel (Spanish, as written)
     publicar.md              publishing is authorised, and what replaces the permission
@@ -227,6 +230,13 @@ kyber/
     vitest-rules.mjs         the vitest settings every rules suite shares
   test/                      node --test, against a fixture consumer
 ```
+
+The icon is a kyber crystal, which is where the name comes from: the part that
+makes the thing work, shared by every blade that carries one. It is a single
+hand-written SVG with no build step, drawn to hold up from 16 px to a banner and
+on either a light or a dark background — checked by rendering it at both, not by
+reading the file. Rasterise it with
+`rsvg-convert -w 512 icon.svg -o icon.png` if somewhere needs a PNG.
 
 kyber is public and MIT-licensed, like the apps that consume it. It holds no
 credentials and names no consumer, which is what makes publishing it free of

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="A kyber crystal">
+  <defs>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8FE8FF" stop-opacity=".45"/>
+      <stop offset="45%" stop-color="#3AA9E0" stop-opacity=".16"/>
+      <stop offset="100%" stop-color="#3AA9E0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="core" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#2F93C9"/>
+      <stop offset="22%"  stop-color="#A9E9FF"/>
+      <stop offset="50%"  stop-color="#EDFBFF"/>
+      <stop offset="78%"  stop-color="#83DAF7"/>
+      <stop offset="100%" stop-color="#2A86C0"/>
+    </linearGradient>
+    <linearGradient id="left" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#6FCDF1"/>
+      <stop offset="100%" stop-color="#1B6DA3"/>
+    </linearGradient>
+    <linearGradient id="right" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#2A7CB5"/>
+      <stop offset="100%" stop-color="#0D3A57"/>
+    </linearGradient>
+    <linearGradient id="capL" x1="0" y1="1" x2="0.2" y2="0">
+      <stop offset="0%"   stop-color="#63C4EC"/>
+      <stop offset="100%" stop-color="#9BE2F8"/>
+    </linearGradient>
+    <linearGradient id="capR" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%"   stop-color="#1D6CA2"/>
+      <stop offset="100%" stop-color="#0F4A71"/>
+    </linearGradient>
+    <!-- the underside is lit from above too, so it sits below the body in value -->
+    <linearGradient id="footL" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%"   stop-color="#3E9DCC"/>
+      <stop offset="100%" stop-color="#13527C"/>
+    </linearGradient>
+    <linearGradient id="footR" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#15547F"/>
+      <stop offset="100%" stop-color="#092E47"/>
+    </linearGradient>
+    <linearGradient id="spark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="26%"  stop-color="#FFFFFF" stop-opacity=".62"/>
+      <stop offset="50%"  stop-color="#FFFFFF" stop-opacity=".85"/>
+      <stop offset="74%"  stop-color="#FFFFFF" stop-opacity=".62"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="128" cy="128" r="104" fill="url(#halo)"/>
+
+  <!-- upper point -->
+  <path d="M128 10 L88 76 L114 76 Z"  fill="url(#capL)"/>
+  <path d="M128 10 L114 76 L148 76 Z" fill="url(#core)" opacity=".95"/>
+  <path d="M128 10 L148 76 L168 76 Z" fill="url(#capR)"/>
+  <!-- body -->
+  <path d="M88 76 L114 76 L114 182 L88 182 Z"    fill="url(#left)"/>
+  <path d="M114 76 L148 76 L148 182 L114 182 Z"  fill="url(#core)"/>
+  <path d="M148 76 L168 76 L168 182 L148 182 Z"  fill="url(#right)"/>
+  <!-- lower point -->
+  <path d="M88 182 L114 182 L128 246 Z"  fill="url(#footL)"/>
+  <path d="M114 182 L148 182 L128 246 Z" fill="url(#core)" opacity=".82"/>
+  <path d="M148 182 L168 182 L128 246 Z" fill="url(#footR)"/>
+
+  <!-- the light that lives inside it -->
+  <path d="M131 22 L136 129 L131 234 L126 129 Z" fill="url(#spark)"/>
+
+  <g fill="none" stroke="#EAF9FF" stroke-opacity=".26" stroke-width="1.4" stroke-linejoin="round">
+    <path d="M114 76 V182 M148 76 V182 M88 76 H168 M88 182 H168"/>
+  </g>
+  <path d="M128 10 L88 76 V182 L128 246 L168 182 V76 Z" fill="none" stroke="#0A2A40" stroke-opacity=".32" stroke-width="2.5" stroke-linejoin="round"/>
+</svg>
