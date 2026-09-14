@@ -18,6 +18,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   vacía, los tests no fallan, **dejan de existir**, y la suite queda verde con
   cero cobertura. La afirmación va en un único test que recorre la lista por
   adentro y además exige que la lista tenga más de N entradas.
+- **Un total contesta «cuántos» a una pregunta que era «cuáles».** Un conteo
+  sobrevive a una sustitución: sacá uno y agregá otro y el número no se mueve,
+  mientras la cosa pasó a estar donde nadie la puso y falta donde alguien la
+  espera. Los dos proyectos afirmaban «hay 3 targets con versión» y ninguno
+  habría notado un cambio de target por otro. La afirmación tiene que ser de
+  identidad —los nombres— y entonces el error puede decir **cuál** falta en vez
+  de «esperaba 3, encontré 2». Vale para todo lo que se cuenta: warnings,
+  archivos, colecciones, líneas que matchean.
+- **Medir el proxy no es medir la cosa.** La familia entera de errores de un
+  día: comparar archivos por **nombre** en vez de por lo que exportan, juzgar si
+  dos funciones son iguales por su **cantidad de caracteres**, leer un diff
+  **truncado**, contar líneas que matchean en vez de mirar a qué target
+  pertenecen. Todas dan un número correcto sobre algo que no era la pregunta, y
+  todas se sienten como una medición.
 - **Comparar todo lo que hay no es comparar que esté todo.** Una lista escrita a
   mano sólo prueba que lo que nombra coincide. La lista se contrasta contra el
   árbol (los archivos, las colecciones raíz) y la guarda **nombra lo que
