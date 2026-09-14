@@ -100,20 +100,25 @@ it once, globally:
 git config --global url."git@github.com:".insteadOf "https://github.com/"
 ```
 
-In GitHub Actions the default token cannot read another private repository,
-so the consumer checks itself out normally and then fetches the submodule with
-a read-only deploy key of kyber (secret `KYBER_DEPLOY_KEY`), for example:
+In GitHub Actions the default token is scoped to the consumer alone and cannot
+read another private repository, so `submodules: true` fails the step. A
+read-only deploy key of kyber (secret `KYBER_DEPLOY_KEY`) fetches it in a step
+of its own, at the ref the gitlink records:
 
 ```yaml
 - uses: actions/checkout@v7
-- uses: webfactory/ssh-agent@v0.9.1
+- id: kyber
+  run: echo "sha=$(git rev-parse HEAD:kyber)" >> "$GITHUB_OUTPUT"
+- uses: actions/checkout@v7
   with:
-    ssh-private-key: ${{ secrets.KYBER_DEPLOY_KEY }}
-- run: |
-    git config url."git@github.com:".insteadOf "https://github.com/"
-    git submodule update --init
+    repository: criscardozo/kyber
+    ref: ${{ steps.kyber.outputs.sha }}
+    ssh-key: ${{ secrets.KYBER_DEPLOY_KEY }}
+    path: kyber
 ```
 
-`actions/checkout`'s own `ssh-key` input cannot do this in one step: it makes
-the CONSUMER clone over SSH with that key, and a deploy key of kyber cannot
-clone the consumer.
+`ssh-key:` belongs on the second checkout, never the first: on the first it
+makes the CONSUMER clone over SSH with that key, and a deploy key of kyber
+cannot clone the consumer — nor can one deploy key be registered on two
+repositories. Keeping it to first-party actions is deliberate too: the one step
+that holds a credential is not the place for a third-party action.
