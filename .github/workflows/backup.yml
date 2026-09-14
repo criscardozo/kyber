@@ -1,0 +1,101 @@
+name: Backup
+
+# The weekly Firestore backup, shared by every consumer.
+#
+# Firestore's managed export needs the paid plan, so the $0 path is the Admin
+# SDK dump in this repo (scripts/backup.mjs) run somewhere that is always on —
+# which a laptop is not. The job was byte-identical in two consumers apart from
+# two sentences of comment, so it lives here and they call it.
+#
+# The CALLER owns the schedule: a reusable workflow cannot carry its own
+# trigger. It also owns the billing — a called workflow's minutes are charged
+# to the repository that called it, which is why this changes no cost.
+#
+# `actions/checkout` below checks out the CALLER's repository, not this one,
+# because `github.repository` inside a called workflow is the caller. With
+# submodules it brings the consumer plus the exact kyber commit its gitlink
+# records — so the scripts that run are the ones the consumer pinned, which is
+# NOT necessarily the ref that selected this file. See check-kyber-pins.mjs.
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: Node version for the runner.
+        type: string
+        default: "22"
+      retention-days:
+        description: How long the artifact is kept. 90 is the ceiling on a free private repo.
+        type: number
+        default: 90
+      artifact-prefix:
+        description: Artifact name prefix; the UTC date is appended.
+        type: string
+        default: firestore-backup
+    secrets:
+      FIREBASE_SERVICE_ACCOUNT:
+        description: The backup service-account JSON, as a repository secret.
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    name: Dump Firestore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # kyber is public, so this needs no credential and brings the exact
+          # commit the consumer's gitlink points at.
+          submodules: true
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Write the service-account key
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT is not set. Add the backup service-account JSON as a repository secret."
+            exit 1
+          fi
+          # Outside the workspace on purpose, so no step can commit or upload
+          # it by accident. The runner is thrown away either way.
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/service-account.json"
+
+      - name: Back up
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service-account.json
+        run: node kyber/scripts/backup.mjs
+
+      # The rules are the ONLY security boundary in these projects, and they are
+      # deployed by hand. A fix that was written, reviewed, merged and never
+      # deployed reads as done in every place anyone would look, so once a week
+      # something asks Firestore what it is actually enforcing. Free: same
+      # runner, same credential, two GETs. A mismatch FAILS the job, which is
+      # what sends the email.
+      - name: Deployed rules still match the repo
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service-account.json
+        run: node kyber/scripts/check-rules-drift.mjs
+
+      - name: Stamp the artifact
+        id: stamp
+        run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ inputs.artifact-prefix }}-${{ steps.stamp.outputs.date }}
+          path: backups/*.json
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
+
+      - name: Shred the key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/service-account.json"

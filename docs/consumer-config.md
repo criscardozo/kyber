@@ -60,6 +60,7 @@ anywhere in the consumer).
 | `restore.mjs` | the same, plus `restore.*` | Emulator by default (the consumer's own port, or `FIRESTORE_EMULATOR_HOST`), only ever a local host. `--production` refuses a dump from another project, a dump not read from production, and a set `FIRESTORE_EMULATOR_HOST`; then asks for the project id typed. |
 | `set-version.mjs` | iosTargets, webManifest, iosProject | Nothing. Refuses before writing if a named target is missing, if an unnamed one carries a version, or if any `CFBundleShortVersionString` is a literal instead of `$(MARKETING_VERSION)`. |
 | `verify-pwa.mjs` | the `pwa` block, webDir | `PWA_BASE_URL` overrides the host. Needs a PRODUCTION server already running: against a dev server the worker never registers and the check passes without testing anything. |
+| `check-kyber-pins.mjs` | nothing | Compares every `uses: criscardozo/kyber/...@<sha>` in the consumer's workflows against `git rev-parse HEAD:kyber`. |
 | `check-rules-drift.mjs` | projectId, firebaseDir | `GOOGLE_APPLICATION_CREDENTIALS`. Exit 1 when the deployed ruleset differs from `firestore.rules`. |
 | `run-rules-tests.mjs` | name, rulesTestsProjectId, firebaseDir, rulesTestsDir | `FIRESTORE_EMULATOR_PORT` to pin a port (busy means stop, not move). |
 
@@ -121,3 +122,41 @@ In GitHub Actions, one line is the whole story:
 It checks out the commit the gitlink records. A private kyber would need a
 read-only deploy key and a second checkout step, because the workflow token is
 scoped to the consumer's own repository.
+
+## The weekly backup
+
+The job is a reusable workflow here, because it was byte-identical in two
+consumers. The consumer keeps the trigger — a reusable workflow cannot carry
+its own — and calls it:
+
+```yaml
+name: Backup
+on:
+  schedule:
+    - cron: "0 20 * * 3"
+  workflow_dispatch:
+concurrency:
+  group: backup
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  dump:
+    uses: criscardozo/kyber/.github/workflows/backup.yml@<the same sha as the gitlink>
+    secrets:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+```
+
+Optional inputs: `node-version`, `retention-days`, `artifact-prefix`.
+
+Minutes are charged to the repository that CALLS a reusable workflow, so this
+costs exactly what the copy it replaces did.
+
+**It makes a consumer point at kyber twice.** The gitlink says which commit of
+the scripts runs; the `uses:` ref says which commit of the workflow runs, and
+GitHub resolves that from the repository rather than from the checked-out
+submodule. Bump one and forget the other and the job is a workflow from one
+commit driving scripts from another, with nothing in the output saying so.
+`check-kyber-pins.mjs` is the guard: run it in CI, and pin a full sha rather
+than a branch or a tag, both of which change what runs without a commit in the
+consumer.

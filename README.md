@@ -13,7 +13,8 @@ gets in, and between them they explain every choice below: it has to be
 | | |
 |---|---|
 | 📜 Rules | `docs/` — the working rules that travel, in Spanish as written. Each consumer imports them into its `CLAUDE.md`, so these are instruction, not only prose |
-| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, and the offline PWA check. Each reads the consumer's own `.kyber/config.json` |
+| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, the offline PWA check, and the guard that keeps a consumer's two pointers at kyber in step. Each reads the consumer's own `.kyber/config.json` |
+| 🔁 Workflow | `.github/workflows/backup.yml` — the weekly Firestore dump as a reusable workflow. The consumer keeps the schedule and calls it; the minutes are the caller's |
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
 | 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
@@ -280,8 +281,8 @@ out not to qualify for reasons nobody had guessed:
   comparing the copies. There is no intersection to extract — a strategy has to
   be chosen first, and generating is the stronger one (see `docs/guardas.md`).
   That is a migration in a consumer, so it is Cristian's call, not this repo's.
-- **A reusable backup workflow** still needs an explicit OK, per the Actions
-  rule.
+- **The reusable backup workflow is in**, approved. It was byte-identical in
+  both consumers apart from two sentences of comment.
 
 The **pre-push hook** is not here and does not qualify yet: only one consumer
 has one at all — no `.githooks`, no husky and no `core.hooksPath` in the other
