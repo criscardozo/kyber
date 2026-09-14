@@ -91,6 +91,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
   Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
   marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **Quien parsea un archivo tiene que decidir explícitamente qué hace con los
+  comentarios.** El default —tratarlos como código— falla en silencio, y el
+  silencio se lee como que anduvo. Un `index()` de `@theme` sobre una hoja de
+  estilos encontró la **prosa** de la cabecera que nombra ese marcador y contó
+  llaves desde ahí: devolvió un bloque real, parseable entero, y el equivocado.
+  Y una guarda vecina venía llegando al bloque correcto **por suerte**, porque
+  su regex ignoraba prosa: un `--x: #fff;` escrito dentro de un comentario la
+  habría vuelto incorrecta sin ninguna señal. Es la misma forma que la guarda
+  cuyo comentario deletreaba un puerto vivo, del otro lado: **un patrón adentro
+  de un comentario no es la cosa que el patrón nombra.**
 - **Un generador que emite strings mueve el fallo al parseo, y ahí muere en
   silencio.** Pasar un color de `0xF4F4F4` a `"#F4F4F4"` cambia un error de
   compilación por uno de runtime: el parser de hex de la plataforma **no

@@ -315,7 +315,11 @@ out not to qualify for reasons nobody had guessed:
   appearance. So destinations are plural, each with its own token subset. And
   a generator that writes colours as strings moves the failure to the parse,
   which is silent (see `docs/guardas.md`), so a consumer taking generated
-  colours needs the parse test with it.
+  colours needs the parse test with it. Radii are a second job, not more of
+  the same: one consumer names them by ROLE and the other by VALUE — `card`
+  and `sheet` against `r18` — which is a real choice with a cost each way, and
+  on iOS one consumer has no radius tokens at all, only thirteen raw numbers.
+  There, emitting radii CREATES the tokens rather than replacing them.
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it
   in CI with a diff, the other writes the palette twice and has a test
