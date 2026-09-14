@@ -82,6 +82,24 @@ midiendo, en las dos apps, y por eso viajan juntas.
   atrapa lo que el otro no vio, no lo que los dos dan por sentado. Contra eso
   sirve una sola cosa: volver a la pregunta y preguntarse qué está afirmando
   antes de contestarla.
+
+  Y la mitad que la completa, de una segunda instancia el mismo día: **no
+  alcanza con que el segundo revisor sea otro, tiene que estar mirando otra
+  cosa.** Dos sesiones escribieron y revisaron un hook y ninguna vio un `eval`
+  sobre un valor de un archivo trackeado. Lo encontró un revisor que no venía
+  de la conversación: los dos primeros preguntaban «¿está el chequeo encadenado
+  a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
+  Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
+  marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **Un valor de un archivo trackeado que llega a un intérprete es ejecución de
+  código.** Un hook que hacía `eval` sobre una lista leída del config del repo:
+  cualquier rama que edite ese archivo corre lo que quiera en el próximo push
+  de quien la tenga checkouteada, y en silencio, porque nadie lee un hook antes
+  de pushear. El arreglo es **sacar el intérprete** —argv y `shell: false`— y
+  no intentar sanear lo que llega, que depende de acertar con el quoting para
+  siempre. Vale para todo lo que se ejecuta desde datos versionados, y la
+  puerta es más angosta que los scripts del manifiesto sólo porque a menos
+  gente se le ocurre mirarla.
 - **Una guarda que reclama más de lo que hace es peor que ninguna.** Al
   instalar una, decir **qué de lo que ya pasó habría atrapado**, contado. De
   tres fallos reales, un hook habría parado uno: los otros dos fueron un job

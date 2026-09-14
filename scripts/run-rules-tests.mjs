@@ -122,6 +122,12 @@ async function main() {
       "--only", "firestore",
       "--project", config.rulesTestsProjectId,
       "--config", configPath,
+      // The ONLY shell string in this repo: `emulators:exec` takes a command,
+      // not argv, so this one is unavoidable. What goes into it comes from
+      // resolution on disk and never from the consumer's config — a config
+      // value reaching an interpreter is arbitrary code execution for whoever
+      // checks out the branch that edited it. Everything else here spawns with
+      // an argv array precisely so this stays the only line to think about.
       `${shellQuote(process.execPath)} ${shellQuote(vitestBin)} run`,
     ],
     {
