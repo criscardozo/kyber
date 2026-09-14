@@ -24,7 +24,7 @@ class GeoPointLike {
 
 test("serialize tags Timestamps and leaves everything else JSON-shaped", () => {
   const out = serialize({
-    name: "Casa",
+    name: "fixture household",
     cents: 1250,
     createdAt: ts(),
     tags: ["a", ts()],
@@ -32,7 +32,7 @@ test("serialize tags Timestamps and leaves everything else JSON-shaped", () => {
     nothing: null,
   });
   assert.deepEqual(out, {
-    name: "Casa",
+    name: "fixture household",
     cents: 1250,
     createdAt: { $timestamp: INSTANT },
     tags: ["a", { $timestamp: INSTANT }],
