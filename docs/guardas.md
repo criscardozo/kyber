@@ -109,6 +109,12 @@ midiendo, en las dos apps, y por eso viajan juntas.
   que decía estar agregándole dos entradas. Todo reemplazo automático afirma
   primero que el anclaje existe; sin eso es un barrido que puede no encontrar
   nada, que es la primera regla de esta lista aplicada a las herramientas.
+
+  Segunda instancia el mismo día y por otro mecanismo: un mensaje de commit
+  entre comillas dobles, con dos palabras entre backticks, salió publicado sin
+  esas dos palabras — el shell las ejecutó como comandos, falló, y el commit se
+  hizo igual. La herramienta cambió lo escrito y salió con éxito. Para texto
+  con formato, heredoc o archivo; nunca una comilla que el shell interpreta.
 - **Una medición que no puede dar el resultado contrario no es una medición.**
   Antes de confiar en un comparador que dice OK, hacerlo fallar a propósito (un
   control positivo). Escribir la guarda **antes** de arreglar lo que va a
