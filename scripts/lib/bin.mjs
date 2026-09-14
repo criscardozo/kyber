@@ -10,6 +10,7 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { pathToFileURL } from "node:url";
 import { KyberError } from "./errors.mjs";
 
 /**
@@ -35,4 +36,24 @@ export function resolveBin(fromDir, packageName, binName) {
     throw new KyberError(`"${packageName}" declares no "${binName}" executable.`);
   }
   return join(dirname(manifestPath), bin);
+}
+
+/**
+ * Import a module the CONSUMER installed, resolved from `fromDir`.
+ *
+ * Same reason as resolveBin: kyber has no node_modules, so a bare specifier
+ * would resolve by accident of where the process started, or not at all.
+ */
+export async function importFrom(fromDir, specifier) {
+  const require = createRequire(join(fromDir, "package.json"));
+  let resolved;
+  try {
+    resolved = require.resolve(specifier);
+  } catch {
+    throw new KyberError(
+      `Cannot find "${specifier}" from ${fromDir}.\n` +
+        "  kyber does not install it; the consumer's own workspace must declare it.",
+    );
+  }
+  return import(pathToFileURL(resolved).href);
 }

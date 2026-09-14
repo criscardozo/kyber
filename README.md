@@ -13,7 +13,7 @@ gets in, and between them they explain every choice below: it has to be
 | | |
 |---|---|
 | 📜 Rules | `docs/` — the working rules that travel, in Spanish as written. Each consumer imports them into its `CLAUDE.md`, so these are instruction, not only prose |
-| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, and a rules-test runner that finds a free port. Each reads the consumer's own `.kyber/config.json` |
+| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, and the offline PWA check. Each reads the consumer's own `.kyber/config.json` |
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
 | 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
@@ -268,10 +268,14 @@ rsvg-convert -w 512 icon.svg -o icon.png     # icon.png, for GitHub's social pre
 
 ## Not yet in kyber
 
-Noted for a second batch, once the consumers have converged on them:
-`set-version.mjs` (reads `iosTargets` from the config), the pre-push hook, the
-design-token emitter, `verify-pwa.mjs`, the iOS install script, and a
-reusable backup workflow (which needs an explicit OK, per the Actions rule).
+Noted for later, once the consumers have converged on them: the design-token
+emitter, the iOS install script, and a reusable backup workflow (which needs an
+explicit OK, per the Actions rule).
+
+The **pre-push hook** is not here and does not qualify yet: only one consumer
+has one at all — no `.githooks`, no husky and no `core.hooksPath` in the other
+— so it is earned in one. The version bump and the PWA check came in once both
+had them.
 
 Browser-side code is now possible too, since a public submodule is really
 there at build time. The first candidate that passes the filter is the theme

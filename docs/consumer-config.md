@@ -27,6 +27,11 @@ consumer can carry settings for a later batch before kyber reads them.
 | `firebaseDir` | path | all | Directory holding `firebase.json`, `firestore.rules`, `firestore.indexes.json` and the gitignored `service-account.json`. Relative to the consumer root. |
 | `rulesTestsDir` | path | run-rules-tests | The rules-tests workspace: `firebase-tools` and `vitest` resolve from there, and `vitest run` runs there. |
 | `restore.legacyIsoTimestamps` | boolean, optional | restore | `true` only for a consumer with real dumps from before the tagged format. Enables the legacy heuristic for dumps without a `format` field. Absent means the heuristic does not exist. |
+| `iosTargets` | string[] | set-version | The NAMES of the iOS targets that carry the version. Names and not a count: a count survives a substitution. |
+| `webManifest` | path, optional | set-version | The web app's `package.json`. Defaults to `apps/web/package.json`. |
+| `iosProject` | path, optional | set-version | The XcodeGen project. Defaults to `apps/ios/project.yml`. |
+| `webDir` | path, optional | verify-pwa | The web workspace, where Playwright is resolved from. Defaults to `apps/web`. |
+| `pwa` | object | verify-pwa | `port`, `entry`, `precachedRoutes`, `minStaticAssets`, `offlineText`, `deepRoute`, and optionally `signedOutText`. All of it is product identity: the routes, the copy on screen, the port. |
 
 `firebase.json` must declare `emulators.firestore.port`: the scripts take the
 project's own port from there and never fall back to Firebase's default.
@@ -53,6 +58,8 @@ anywhere in the consumer).
 | --- | --- | --- |
 | `backup.mjs` | name, projectId, emulatorProjectId, firebaseDir | `GOOGLE_APPLICATION_CREDENTIALS` for production; `FIRESTORE_EMULATOR_HOST` to read the emulator; `BACKUP_PROJECT_ID` to label an emulator dump. |
 | `restore.mjs` | the same, plus `restore.*` | Emulator by default (the consumer's own port, or `FIRESTORE_EMULATOR_HOST`), only ever a local host. `--production` refuses a dump from another project, a dump not read from production, and a set `FIRESTORE_EMULATOR_HOST`; then asks for the project id typed. |
+| `set-version.mjs` | iosTargets, webManifest, iosProject | Nothing. Refuses before writing if a named target is missing, if an unnamed one carries a version, or if any `CFBundleShortVersionString` is a literal instead of `$(MARKETING_VERSION)`. |
+| `verify-pwa.mjs` | the `pwa` block, webDir | `PWA_BASE_URL` overrides the host. Needs a PRODUCTION server already running: against a dev server the worker never registers and the check passes without testing anything. |
 | `check-rules-drift.mjs` | projectId, firebaseDir | `GOOGLE_APPLICATION_CREDENTIALS`. Exit 1 when the deployed ruleset differs from `firestore.rules`. |
 | `run-rules-tests.mjs` | name, rulesTestsProjectId, firebaseDir, rulesTestsDir | `FIRESTORE_EMULATOR_PORT` to pin a port (busy means stop, not move). |
 

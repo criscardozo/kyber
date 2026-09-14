@@ -14,7 +14,7 @@
 // webManifest and iosProject when they are not in the usual place.
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { relative } from "node:path";
+import { join, relative } from "node:path";
 import { loadConsumer } from "./lib/consumer.mjs";
 import { KyberError, run } from "./lib/errors.mjs";
 import { readTargets, versionProblems, writeVersion } from "./lib/ios-version.mjs";
@@ -51,10 +51,14 @@ async function main() {
   // the two platforms disagreeing, which is the exact state the script exists
   // to prevent, produced by the tool for preventing it. The order is simply
   // the one you write in.
+  // Defaults, because both consumers already put them here; a project that
+  // does not can say so in the config rather than be told it is wrong.
   const manifestPath = config.webManifest
     ? dir("webManifest")
-    : dir2(root, "apps/web/package.json");
-  const projectPath = config.iosProject ? dir("iosProject") : dir2(root, "apps/ios/project.yml");
+    : join(root, "apps", "web", "package.json");
+  const projectPath = config.iosProject
+    ? dir("iosProject")
+    : join(root, "apps", "ios", "project.yml");
   const manifest = read(manifestPath);
   const project = read(projectPath);
 
@@ -102,10 +106,6 @@ Next, in this order:
   git commit -am "chore: v${version}"
   git tag -a v${version} -m "v${version}"
   git push --follow-tags                # without this the tag stays local`);
-}
-
-function dir2(root, rel) {
-  return new URL(rel, `file://${root}/`).pathname;
 }
 
 function read(path) {
