@@ -308,6 +308,14 @@ out not to qualify for reasons nobody had guessed:
   what put the second clause of the filter into words. It goes in when
   something bigger goes with it.
 - **The design-token emitter does not, and not because one side lacks it.**
+  Requirements gathered while a consumer prepares its side, so they are not
+  rediscovered later: a consumer can have a target that needs the tokens and
+  **cannot link the generated file** — a watch app, with its own parser forced
+  on it because targets share no code, a subset of the tokens, and a single
+  appearance. So destinations are plural, each with its own token subset. And
+  a generator that writes colours as strings moves the failure to the parse,
+  which is silent (see `docs/guardas.md`), so a consumer taking generated
+  colours needs the parse test with it.
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it
   in CI with a diff, the other writes the palette twice and has a test

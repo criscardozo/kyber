@@ -91,6 +91,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
   Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
   marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **Un generador que emite strings mueve el fallo al parseo, y ahí muere en
+  silencio.** Pasar un color de `0xF4F4F4` a `"#F4F4F4"` cambia un error de
+  compilación por uno de runtime: el parser de hex de la plataforma **no
+  lanza** —deja el valor en cero y devuelve un `false` que nadie mira— así que
+  un hex mal escrito no rompe nada, no mueve ningún layout, y deja la pantalla
+  **negra**. Medido mutando el parser: cuatro colores dieron `[0,0,0]`. Cuando
+  el valor deja de ser un tipo y pasa a ser un dato en tránsito, el parseo es
+  el único lugar donde puede morir, y necesita su propio test.
+- **Un test que compara dos resultados de la misma función no prueba nada.**
+  Los dos lados se ponen de acuerdo con cualquier bug. El test del parseo tiene
+  que traer los números **escritos como números**, calculados afuera, y
+  resolver el valor real a través de la plataforma — no volver a llamar al
+  parser para producir lo esperado. Es la versión concreta de que una medición
+  que no puede dar el resultado contrario no es una medición.
 - **Un valor de un archivo trackeado que llega a un intérprete es ejecución de
   código.** Un hook que hacía `eval` sobre una lista leída del config del repo:
   cualquier rama que edite ese archivo corre lo que quiera en el próximo push
