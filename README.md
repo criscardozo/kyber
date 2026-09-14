@@ -1,7 +1,6 @@
-<h1 align="center">
-  <img src="icon.svg" alt="" width="44" align="middle">
-  Kyber
-</h1>
+<p align="center">
+  <img src="banner.png" alt="Kyber" width="360">
+</p>
 
 The shared layer for three household apps by the same author, on the same stack
 — SwiftUI on iOS with a widget and a watch app, Next.js on the web, Firebase on
@@ -18,7 +17,7 @@ gets in, and between them they explain every choice below: it has to be
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
 | 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
-| 💎 Icon | `icon.svg` — the crystal, hand-drawn; `icon.png` is a 512 px render of it |
+| 💎 Mark | `icon.svg` — the crystal, hand-drawn. `icon.png` renders it; `banner.png` is built from it by `design/build-banner.mjs` |
 
 ## What it does
 
@@ -253,14 +252,19 @@ consumer that has not opted in, tags in a legacy dump, a `$timestamp` with
 siblings, GeoPoint and Bytes in `serialize`, and a `"YYYY-MM-DD"` under a key
 ending in `At` staying a string.
 
-The icon is a kyber crystal, which is where the name comes from: the part that
+The mark is a kyber crystal, which is where the name comes from: the part that
 makes the thing work, shared by every blade that carries one. `icon.svg` is
-hand-written with no build step, drawn to hold up from 16 px to a banner on
-either a light or a dark background — checked by rendering it at both, not by
-reading the file. `icon.png` is a 512 px render of it for anywhere that cannot
-take an SVG, GitHub's social preview among them; regenerate it with
-`rsvg-convert -w 512 icon.svg -o icon.png`. The SVG is the source and the PNG
-follows it.
+hand-written with no build step, drawn to hold up from 16 px upward on either a
+light or a dark background — checked by rendering it at both, not by reading
+the file.
+
+Everything else derives from it, and by script rather than by hand, because a
+second drawing of the same mark is one nothing keeps in step:
+
+```sh
+node design/build-banner.mjs                 # banner.png, what the README opens with
+rsvg-convert -w 512 icon.svg -o icon.png     # icon.png, for GitHub's social preview
+```
 
 ## Not yet in kyber
 

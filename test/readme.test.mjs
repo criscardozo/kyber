@@ -30,19 +30,23 @@ test("every local file the README points at exists", () => {
   assert.deepEqual({ checked: all.length, missing }, { checked: all.length, missing: [] });
 });
 
-test("the README opens with the icon on the title line, and the icon is there", () => {
-  // The one failure worth guarding: the file moves and the mark silently
-  // becomes a broken image. Style is not guarded — getting the order of the
-  // sections wrong costs a correction, not a product.
+test("the README opens with the mark, and the file is there", () => {
+  // The one failure worth guarding: the image moves or the generator changes
+  // its output path, and the README opens with a broken image — which nobody
+  // notices, because the person who last looked at it knows what it says.
   //
-  // The heading is HTML rather than `# Kyber` because the icon has to sit on
-  // the same line and centred, and markdown cannot size an image. Checked
-  // against GitHub's own renderer: it keeps align on both elements and the
-  // width, and wraps the image in a link to itself.
-  const head = README.split("\n").slice(0, 5).join("\n");
-  assert.match(head, /<h1[^>]*>/, "the README does not open with an h1");
-  const img = head.match(/<img[^>]*\bsrc="([^"]+)"/);
-  assert.ok(img !== null, "no icon on the title line");
-  assert.ok(/\bKyber\b/.test(head), "the name is not on the title line");
+  // Style is not guarded. Getting the order of the sections wrong costs a
+  // correction; a mark that does not load costs the first impression.
+  const head = README.split("\n").slice(0, 4).join("\n");
+  const img = head.match(/<img[^>]*\bsrc="([^"]+)"[^>]*>/);
+  assert.ok(img !== null, `the README does not open with an image:\n${head}`);
+  // Relative, never a raw URL. The two look identical on GitHub and differ
+  // everywhere else, and a raw URL pins a branch that can be renamed or a sha
+  // that freezes the image. This was caught by the existence check on its own,
+  // by accident; saying it here makes the failure name the actual problem.
+  assert.doesNotMatch(img[1], /^[a-z]+:\/\//i, `${img[1]} is a URL; the src must be a path in this repo`);
   assert.ok(existsSync(join(ROOT, img[1])), `${img[1]} is referenced but not in the repo`);
+  // The banner carries the name, so the alt text has to as well: it is the
+  // title for anyone whose images do not load, and for a screen reader.
+  assert.match(img[0], /\balt="[^"]+"/, "the mark has no alt text, and it is the title");
 });
