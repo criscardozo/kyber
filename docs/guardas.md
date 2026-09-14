@@ -102,6 +102,17 @@ midiendo, en las dos apps, y por eso viajan juntas.
   estructurado antes y después —(archivo, tipo, argumentos), 124 contra 124—
   en vez de contar. Un rename es seguro cuando se midió que nada se movió, no
   cuando el total coincide.
+
+  Y aplica **también a la sonda que mide**. Dos veces el mismo día, en el mismo
+  arreglo: una búsqueda de una construcción de Swift corrida sobre el barrido
+  de `.tsx` devolvió **0** —hay 276— y casi se reporta como hallazgo; después,
+  probando que el comentario se ignoraba, la línea plantada dio 0, pero el
+  control mostró que **la misma línea como código también daba 0**, porque el
+  archivo de prueba tenía la extensión equivocada. No medía nada. **El cero es
+  el número más absorbible que existe**, porque se lee como «no hay». Probar
+  una exclusión exige las dos mitades en el mismo tipo de archivo: el caso
+  excluido da 0 **y** el caso normal da 1. Sin la segunda, «lo ignoró» y «no
+  escaneó nada» son la misma salida.
 - **Al colapsar valores decide el mecanismo que los consume, no su
   frecuencia.** Dos tamaños tipográficos a medio píxel de distancia se
   unificaron, y el destino no lo eligió el conteo: la función que mapea tamaño
