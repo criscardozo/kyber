@@ -58,3 +58,27 @@
 
   Kyber mismo queda afuera: no declara versión y se consume por el sha exacto
   que registra el gitlink del submódulo, así que no hay nada que taggear.
+
+## Cuando una dependencia declarada se mueve
+
+- **Un bump en una clave de `stack.json` es un cambio de tres repos, no de
+  uno.** El PR del bot no puede mergear solo aunque su diff sea correcto: la
+  guarda del consumidor compara contra kyber, así que mergear primero deja la
+  rama principal en rojo. El orden es **kyber, después cada consumidor** —el
+  valor y el gitlink en el mismo commit— y recién ahí el PR entra. Eso no es
+  una falla del proceso: es la guarda diciendo que la decisión es compartida.
+- **El PR del bot llega con el gitlink viejo.** Ramificó antes del último bump
+  del submódulo, así que mergearlo sin mirar **retrocede kyber** varios commits,
+  y su CI corrió contra esa versión vieja. Es de las que no cambian el color de
+  nada: el PR está verde por haber probado otra cosa. Antes de mergear, comparar
+  `git rev-parse HEAD:kyber` de la rama contra el de la principal.
+- **Ojo con el bump que no cambia nada.** Un rango `^24.13.3` ya admite
+  `24.13.4`, así que mover el rango declarado no cambia qué se instala: mueve
+  la **intención** y arrastra tres repos por algo que el lockfile ya podía
+  hacer solo. Esa es la estrategia `increase` de Dependabot, que es su default
+  para aplicaciones. La documentación de GitHub define la alternativa así:
+  `increase-if-necessary` — «deja el requisito de versión sin cambios si ya
+  admite la nueva release (Dependabot igual actualiza la versión resuelta); si
+  no, lo ensancha». Está soportada para `npm`. Con eso, un patch dentro del
+  rango mueve sólo el lockfile y `stack.json` no se entera, que es lo correcto:
+  la declaración es la intención y un patch no la cambia.
