@@ -91,6 +91,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
   Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
   marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **El conjunto de archivos ES parte de la medición, y hay que elegirlo para
+  la pregunta.** No hay default correcto. Antes en este archivo quedó que un
+  barrido que afirma completitud sobre el repo tiene que leer también lo **no
+  trackeado**, porque el archivo recién escrito es justo donde aparece la copia
+  nueva. Lo inverso también es cierto y muerde igual: un barrido sobre **código
+  fuente** que camina el filesystem se come los directorios de compilación.
+  Medido — la misma orden, en dos repos hermanos: en uno alcanzó 81 archivos y
+  dio bien; en el otro alcanzó **2246** en vez de 53, y reportó valores que no
+  existen en ese código, porque había un `build/` ignorado con las fuentes de
+  las dependencias adentro. El mismo comando, una respuesta correcta y una
+  falsa, según qué hubiera compilado alguien esa tarde. **Una medición cuya
+  respuesta depende del estado de la máquina no es una medición del código.**
 - **La respuesta equivocada con el conteo correcto es la peor de todas.** Un
   recorredor asumía que todos los grupos anidan dos niveles. Los colores sí
   —`color.surface.ground`— y los radios no: van directo bajo el suyo. Leído un
