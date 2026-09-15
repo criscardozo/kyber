@@ -254,8 +254,10 @@ What that centralisation does not do is turn a pointer bump into consent:
 git config core.hooksPath .githooks   # once per clone
 ```
 
-The hook runs `node --check` over every script and the whole suite before each
-push. It exists because running them by hand worked right up until the commit
+The hook runs a syntax check over every tracked script — `.mjs`, `.py`, and
+the hook itself — and then the whole suite, before each push. The file set
+comes from `git ls-files`, not from a list of directories: when it was a list,
+this sentence said "every script" and one tracked `.mjs` was not in it. It exists because running them by hand worked right up until the commit
 whose message described an edit that had failed its own assertion: the check
 had happened, it was simply not what the push depended on. Both finish in
 under a second, measured — the usual reason for keeping tests out of a hook is
