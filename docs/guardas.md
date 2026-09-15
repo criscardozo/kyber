@@ -261,6 +261,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   identidad —los nombres— y entonces el error puede decir **cuál** falta en vez
   de «esperaba 3, encontré 2». Vale para todo lo que se cuenta: warnings,
   archivos, colecciones, líneas que matchean.
+
+  Y la vuelta, para no sobrecorregir, porque convertir todo conteo en piso
+  debilita las guardas que sí deben ser exactas: **el conteo exacto es correcto
+  cuando la población la fija el propio test.** Sobre un fixture, «exactamente
+  un problema» es lo que atrapa el problema de más que la mutación no pedía, y
+  un piso lo dejaría pasar. Sobre una población que viene de afuera y puede
+  crecer con razón —los tokens de un archivo, los archivos de un árbol— el
+  exacto falla el día que alguien agrega uno **bien**, con un mensaje que no
+  nombra nada y que pide subir el número a mano: la lista mantenida a mano
+  entrando por otra puerta. Ahí va piso, más la afirmación por nombre.
 - **Medir el proxy no es medir la cosa.** La familia entera de errores de un
   día: comparar archivos por **nombre** en vez de por lo que exportan, juzgar si
   dos funciones son iguales por su **cantidad de caracteres**, leer un diff
