@@ -593,13 +593,20 @@ class Flags(unittest.TestCase):
         )
         self.dest = Destination(self.css, css_decls, css_pattern, label="CSS")
 
-    def usage(self):
+    def quiet(self, args):
+        """Run main with both streams captured, and return (code, stdout).
+
+        Captured rather than let through: the refusal path prints to stderr,
+        which is where the pre-push hook reads the suite's verdict from. A
+        test that writes there turns a clean run into one somebody has to read
+        carefully, and the noise stays until it hides something.
+        """
         import io
-        from contextlib import redirect_stdout
-        out = io.StringIO()
-        with redirect_stdout(out):
-            tokens_main(DOC, [self.dest], ["--help"])
-        return out.getvalue()
+        from contextlib import redirect_stderr, redirect_stdout
+        out, err = io.StringIO(), io.StringIO()
+        with redirect_stdout(out), redirect_stderr(err):
+            code = tokens_main(DOC, [self.dest], args)
+        return code, out.getvalue() + err.getvalue()
 
     def test_every_accepted_flag_is_named_in_the_usage_line(self):
         # The accepted set decides what gets REFUSED, so a flag missing from
@@ -607,16 +614,16 @@ class Flags(unittest.TestCase):
         # sends whoever reads it to a command that errors. Two lists, nothing
         # coupling them: it named two of the four. Aliases are excluded by
         # asking for the long form of each pair, not by a list of exceptions.
-        text = self.usage()
+        _, text = self.quiet(["--help"])
         for flag in ["--verify", "--write", "--help"]:
             self.assertIn(flag, text)
 
     def test_an_unknown_flag_is_refused_rather_than_ignored(self):
-        self.assertEqual(tokens_main(DOC, [self.dest], ["--wrote"]), 1)
+        self.assertEqual(self.quiet(["--wrote"])[0], 1)
 
     def test_help_does_not_run_anything(self):
         before = self.css.read_text(encoding="utf-8")
-        self.assertEqual(tokens_main(DOC, [self.dest], ["--help"]), 0)
+        self.assertEqual(self.quiet(["--help"])[0], 0)
         self.assertEqual(self.css.read_text(encoding="utf-8"), before)
 
 
