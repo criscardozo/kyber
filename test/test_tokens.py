@@ -55,6 +55,35 @@ def css_pattern(name, _entry):
     return re.compile(rf"^[ \t]*--{re.escape(name)}:[^;\n]+;", re.M)
 
 
+def colour_decls(name, entry):
+    """The CSS pair, declining anything that is not a light/dark colour."""
+    value = entry["$value"]
+    if not isinstance(value, dict) or "light" not in value:
+        return []
+    return css_decls(name, entry)
+
+
+def colour_pattern(name, entry):
+    value = entry["$value"]
+    if not isinstance(value, dict) or "light" not in value:
+        return None
+    return css_pattern(name, entry)
+
+
+def swift_decls(name, entry):
+    """A second shape in the same file: one line, a bare dimension."""
+    value = entry["$value"]
+    if not isinstance(value, str):
+        return []
+    return [f"    static let {name}: CGFloat = {value.removesuffix('px')}"]
+
+
+def swift_pattern(name, entry):
+    if not isinstance(entry["$value"], str):
+        return None
+    return re.compile(rf"^[ \t]*static let {re.escape(name)}: CGFloat = .+$", re.M)
+
+
 class Values(unittest.TestCase):
     def test_a_plain_hex_passes_through(self):
         self.assertEqual(css_value("#F4F4F4"), "#F4F4F4")
@@ -326,6 +355,59 @@ class VerifyAndWrite(unittest.TestCase):
         before = other.read_text(encoding="utf-8")
         self.assertEqual(write(DOC, [ok, self.dest()]), 1)
         self.assertEqual(other.read_text(encoding="utf-8"), before)
+
+
+    def test_two_destinations_on_the_same_file_compose_instead_of_clobbering(self):
+        # Asked for by a consumer before wiring it: its theme file already
+        # takes colours by line rewrite, and radii would land in the same
+        # path. Nobody had ever pointed two destinations at one file, and the
+        # failure it would have — each destination rebuilding from the text it
+        # read at the start, so the last writer wins and the first one's
+        # changes vanish — looks exactly like success: the run reports both,
+        # and the file carries one.
+        both = self.dir / "Theme.swift"
+        both.write_text(
+            "enum Palette {\n"
+            "  --ground: #OLD;\n  --ground: #OLD;\n"
+            "  --veil: a;\n  --veil: b;\n"
+            "  --ink: a;\n  --ink: b;\n"
+            "}\n"
+            "enum Radius {\n"
+            "    static let card: CGFloat = 99\n"
+            "    static let field: CGFloat = 99\n"
+            "}\n",
+            encoding="utf-8",
+        )
+        colours = Destination(both, colour_decls, colour_pattern, label="colours")
+        radii = Destination(both, swift_decls, swift_pattern, label="radii")
+        groups = ["color", "radius"]
+        self.assertEqual(write(DOC, [colours, radii], groups), 0)
+
+        out = both.read_text(encoding="utf-8")
+        self.assertIn("  --ground: #F4F4F4;", out)          # the first destination survived
+        self.assertIn("    static let card: CGFloat = 18", out)  # and so did the second
+        self.assertIn("    static let field: CGFloat = 10", out)
+        self.assertNotIn("99", out)
+        self.assertIn("enum Palette {", out)
+        self.assertEqual(verify(DOC, [colours, radii], groups), 0)
+
+    def test_a_shared_file_still_refuses_as_a_whole_when_one_half_is_short(self):
+        # The all-or-nothing promise has to hold per FILE, not per destination:
+        # writing the radii of a file whose colours came up short is exactly
+        # the half-generated tree write() says it will never leave.
+        both = self.dir / "Theme.swift"
+        both.write_text(
+            "  --ground: #OLD;\n"                      # one of the two it emits
+            "  --veil: a;\n  --veil: b;\n"
+            "  --ink: a;\n  --ink: b;\n"
+            "    static let card: CGFloat = 99\n",
+            encoding="utf-8",
+        )
+        before = both.read_text(encoding="utf-8")
+        colours = Destination(both, colour_decls, colour_pattern, label="colours")
+        radii = Destination(both, swift_decls, swift_pattern, label="radii")
+        self.assertEqual(write(DOC, [colours, radii], ["color", "radius"]), 1)
+        self.assertEqual(both.read_text(encoding="utf-8"), before)
 
 
 if __name__ == "__main__":
