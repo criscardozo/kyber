@@ -91,6 +91,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
   Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
   marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **Cuando dos números que deberían coincidir no coinciden, la diferencia es
+  el dato, no el ruido — y tener una explicación no la cierra.** Una
+  verificación contó 112 declaraciones donde la herramienta del consumidor
+  contaba 152. La explicación apareció enseguida y era correcta: un archivo
+  declara cada token tres veces y el otro dos. Con eso alcanzaba para archivar
+  la discrepancia, y así se propuso. Perseguirla igual destapó **tres** fallos
+  reales en el código compartido, ninguno relacionado con el conteo en sí. Una
+  explicación dice por qué difieren los números; no dice que no haya nada más
+  ahí.
 - **Buscar un substring no es buscar una línea.** Una declaración indentada
   con dos espacios es **substring exacto** de la misma indentada con cuatro, así
   que un archivo que declara el mismo token a dos profundidades —un bloque
