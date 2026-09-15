@@ -134,6 +134,17 @@ midiendo, en las dos apps, y por eso viajan juntas.
   si la real está instalada, correrlo contra ella una vez contesta las dos sin
   razonar ninguna.
 
+  Segunda vez, y con un disparador que la primera no daba: cuando la cosa real
+  vive en **otro repo**, no hay contra qué correrlo, y el sustituto es el
+  primer cableado ajeno. Un destino generado entre dos anclas se probó con
+  quince tests que llevaban el sangrado **adentro del string del ancla**; el
+  consumidor que lo cableó escribió las anclas peladas, porque es lo natural al
+  tipearlas a mano, y con eso apareció un bug que ningún test podía disparar.
+  No lo encontró probando esa dimensión: lo encontró **usándolo distinto**. Así
+  que el primer uso real de algo compartido es una medición, no una entrega, y
+  la pregunta que la cobra es «¿en qué difirió tu forma de usarlo de mi forma
+  de probarlo?» — preguntada mientras el que cableó todavía se acuerda.
+
 ### Conteos, totales y comparaciones
 
 - **Un total contesta «cuántos» a una pregunta que era «cuáles».** Un conteo
