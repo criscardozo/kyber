@@ -351,6 +351,25 @@ out not to qualify for reasons nobody had guessed:
   must not round to the most-used neighbour: what decides where a value
   collapses is the function that consumes it, not how often each candidate
   appears (see `docs/guardas.md`).
+
+  **Second pass, open (2026-09-15).** Both consumers inventoried their radii
+  by role on the same day, independently, and reported the same two things.
+  One: iOS has no radius constant anywhere in either, so the destination has
+  to CREATE a block rather than rewrite declarations that exist — earned in
+  two, with the same shape described twice, so an anchored-block destination
+  belongs here. Two: in both, one role carries three different values that
+  nobody ever decided, which is why emitting is not the next step. Generating
+  from a source nobody decided freezes it with a tool's authority (see
+  `docs/guardas.md`); the reconciling is a person's, and it is Cristian's.
+
+  One consequence a consumer found while reviewing the design, worth writing
+  before the pass rather than after: tokenising can TURN OFF the guard that
+  watches the call sites. A check that catches a literal outside the scale
+  goes quiet the moment that literal becomes a token, so the pass has to carry
+  its replacement — "no radius literal outside the generated block" — and that
+  guard is written BEFORE the tokens exist, so its first run fails on its own
+  with every current literal in view. Written afterwards it is born green.
+  That half names each consumer's own paths, so it stays there.
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it
   in CI with a diff, the other writes the palette twice and has a test
