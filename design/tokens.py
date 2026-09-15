@@ -584,10 +584,24 @@ def write(doc: dict, destinations: list[Destination | Block],
         print("  no se reescribió ninguna declaración: ningún patrón coincidió")
         return 1
 
-    for dest in destinations:
-        if updated[dest.path] != texts[dest.path]:
-            Path(dest.path).write_text(updated[dest.path], encoding="utf-8")
-    names = "\n    ".join(str(d.path) for d in destinations)
+    # By PATH, not by destination. Two destinations can share one file — a
+    # theme taking colours line by line and radii as a block — and iterating
+    # destinations wrote that file twice and then listed it twice in the
+    # report. The second write was harmless and the second line was not: a
+    # consumer reading it the first time has to work out whether something was
+    # written twice, and a report that needs interpreting is one that stops
+    # being read.
+    written = []
+    for path in dict.fromkeys(d.path for d in destinations):
+        if updated[path] != texts[path]:
+            Path(path).write_text(updated[path], encoding="utf-8")
+            written.append(str(path))
+    if not written:
+        # Distinguished from having written, because on a second run they are
+        # the same number of declarations and a different fact about the disk.
+        print(f"  {rewritten} declaraciones ya estaban escritas: ningún archivo cambió")
+        return 0
+    names = "\n    ".join(written)
     print(f"  {rewritten} declaraciones reescritas desde tokens.json:\n    {names}")
     return 0
 
