@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "design"))
 
 from tokens import (  # noqa: E402
     AnchorError,
+    main as tokens_main,
     Block,
     Destination,
     css_value,
@@ -580,6 +581,43 @@ class Blocks(unittest.TestCase):
             self.block().body(self.swift.read_text(encoding="utf-8"))
         self.assertIn("radios", str(caught.exception))
         self.assertIn("cierre", str(caught.exception))
+
+
+class Flags(unittest.TestCase):
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.css = self.dir / "globals.css"
+        self.css.write_text(
+            "\n".join(d for n, e in flat(DOC) for d in css_decls(n, e)) + "\n",
+            encoding="utf-8",
+        )
+        self.dest = Destination(self.css, css_decls, css_pattern, label="CSS")
+
+    def usage(self):
+        import io
+        from contextlib import redirect_stdout
+        out = io.StringIO()
+        with redirect_stdout(out):
+            tokens_main(DOC, [self.dest], ["--help"])
+        return out.getvalue()
+
+    def test_every_accepted_flag_is_named_in_the_usage_line(self):
+        # The accepted set decides what gets REFUSED, so a flag missing from
+        # the message cannot be discovered and one named but not accepted
+        # sends whoever reads it to a command that errors. Two lists, nothing
+        # coupling them: it named two of the four. Aliases are excluded by
+        # asking for the long form of each pair, not by a list of exceptions.
+        text = self.usage()
+        for flag in ["--verify", "--write", "--help"]:
+            self.assertIn(flag, text)
+
+    def test_an_unknown_flag_is_refused_rather_than_ignored(self):
+        self.assertEqual(tokens_main(DOC, [self.dest], ["--wrote"]), 1)
+
+    def test_help_does_not_run_anything(self):
+        before = self.css.read_text(encoding="utf-8")
+        self.assertEqual(tokens_main(DOC, [self.dest], ["--help"]), 0)
+        self.assertEqual(self.css.read_text(encoding="utf-8"), before)
 
 
 if __name__ == "__main__":
