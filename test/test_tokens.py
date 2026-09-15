@@ -268,6 +268,42 @@ class VerifyAndWrite(unittest.TestCase):
         self.css.write_text("nothing here\n", encoding="utf-8")
         self.assertEqual(write(DOC, [self.dest()]), 1)
 
+    def test_a_subset_destination_reads_its_membership_from_the_file(self):
+        # The point of the flag: which tokens a partial target carries comes
+        # from the file, never from a list beside it. A consumer typed out
+        # eight identifiers for its watch while the file declared nine, so the
+        # ninth sat outside the generator and drifted on the next write —
+        # with verify green, because it did not consider that token its own.
+        sub = Destination(self.css, css_decls, css_pattern, label="watch", subset=True)
+        # The file names one of the three tokens. That is its membership.
+        self.css.write_text("  --ink: old;\n  --ink: old;\n", encoding="utf-8")
+        self.assertEqual(write(DOC, [sub]), 0)
+        out = self.css.read_text(encoding="utf-8")
+        self.assertIn("  --ink: #111111;", out)
+        self.assertNotIn("--ground", out)
+        self.assertEqual(verify(DOC, [sub]), 0)
+
+    def test_a_subset_adopts_a_token_the_file_starts_declaring(self):
+        # The failure the flag exists for, in the direction that bit: the file
+        # gains a token and the destination picks it up, where a typed list
+        # would have gone on ignoring it.
+        sub = Destination(self.css, css_decls, css_pattern, label="watch", subset=True)
+        self.css.write_text("  --ink: a;\n  --ink: b;\n", encoding="utf-8")
+        self.assertEqual(write(DOC, [sub]), 0)
+        one = self.css.read_text(encoding="utf-8").count("#F4F4F4")
+        self.css.write_text("  --ink: a;\n  --ink: b;\n  --ground: x;\n  --ground: y;\n",
+                            encoding="utf-8")
+        self.assertEqual(write(DOC, [sub]), 0)
+        self.assertIn("  --ground: #F4F4F4;", self.css.read_text(encoding="utf-8"))
+        self.assertEqual(one, 0)
+
+    def test_without_the_flag_a_destination_owns_every_token(self):
+        # Default unchanged: a full destination missing a token is a failure,
+        # not a subset quietly declining it.
+        full = Destination(self.css, css_decls, css_pattern, label="CSS")
+        self.css.write_text("  --ink: #111111;\n  --ink: #EEEEEE;\n", encoding="utf-8")
+        self.assertEqual(verify(DOC, [full]), 1)
+
     def test_a_destination_that_declines_a_token_is_a_legitimate_subset(self):
         # How a watch app or a widget carries fewer names without a list that
         # has to be kept in step.
