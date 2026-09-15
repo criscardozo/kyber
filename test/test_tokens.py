@@ -78,10 +78,10 @@ class Walk(unittest.TestCase):
 class Rewrite(unittest.TestCase):
     def test_each_match_takes_the_next_value_in_order(self):
         text = "  --ink: #000;\n  /* dark */\n    --ink: #fff;\n"
-        out, n = rewrite_declarations(
+        out, n, matched, reindented = rewrite_declarations(
             text, css_pattern("ink", {}), ["  --ink: #111111;", "    --ink: #EEEEEE;"]
         )
-        self.assertEqual(n, 2)
+        self.assertEqual((n, matched, reindented), (2, 2, 0))
         self.assertIn("  --ink: #111111;", out)
         self.assertIn("    --ink: #EEEEEE;", out)
 
@@ -89,21 +89,36 @@ class Rewrite(unittest.TestCase):
         # The reason both consumers rewrote line by line: the declarations sit
         # among comments and among tokens the generator does not own.
         text = "/* keep */\n  --ink: #000; /* trailing */\n  --other: red;\n"
-        out, _ = rewrite_declarations(text, css_pattern("ink", {}), ["  --ink: #111111;"])
+        out, _, _, _ = rewrite_declarations(text, css_pattern("ink", {}), ["  --ink: #111111;"])
         self.assertIn("/* keep */", out)
         self.assertIn("--other: red;", out)
         self.assertIn("/* trailing */", out)
 
     def test_a_pattern_that_matches_nothing_changes_nothing_and_says_so(self):
         text = "  --ink: #000;\n"
-        out, n = rewrite_declarations(text, css_pattern("absent", {}), ["  --absent: #fff;"])
-        self.assertEqual((out, n), (text, 0))
+        out, n, matched, _ = rewrite_declarations(text, css_pattern("absent", {}), ["  --absent: #fff;"])
+        self.assertEqual((out, n, matched), (text, 0, 0))
 
-    def test_more_matches_than_values_leaves_the_extras_alone(self):
+    def test_more_matches_than_values_is_reported_not_hidden(self):
+        # This function leaves the extras alone, which is correct at this
+        # level — but it has to SAY there were extras, because the caller
+        # cannot otherwise tell a clean run from a file left half-rewritten.
         text = "  --ink: #000;\n  --ink: #111;\n  --ink: #222;\n"
-        out, n = rewrite_declarations(text, css_pattern("ink", {}), ["  --ink: #A;"])
-        self.assertEqual(n, 1)
+        out, n, matched, _ = rewrite_declarations(text, css_pattern("ink", {}), ["  --ink: #A;"])
+        self.assertEqual((n, matched), (1, 3))
         self.assertIn("  --ink: #111;", out)
+
+
+    def test_a_replacement_that_would_re_indent_is_counted(self):
+        # The same token often sits at two depths — flat in :root, nested in a
+        # media query — and rewriting both from one fixed string silently
+        # re-indents the nested one. No value is wrong, so no diff of the
+        # values shows it.
+        text = "  --ink: #000;\n    --ink: #fff;\n"
+        _, _, _, reindented = rewrite_declarations(
+            text, css_pattern("ink", {}), ["  --ink: #A;", "  --ink: #B;"]
+        )
+        self.assertEqual(reindented, 1)
 
 
 class VerifyAndWrite(unittest.TestCase):
@@ -156,6 +171,67 @@ class VerifyAndWrite(unittest.TestCase):
         before = self.css.read_text(encoding="utf-8")
         self.assertEqual(write(DOC, [self.dest()]), 1)
         self.assertEqual(self.css.read_text(encoding="utf-8"), before)
+
+    def test_write_refuses_when_the_file_says_a_token_more_times_than_it_emits(self):
+        # The direction this guard was missing, found by reconciling two
+        # declaration counts that disagreed. A stylesheet declaring every
+        # token three times against a callback returning two left the third
+        # copy stale — and it survived BOTH guards, because verify only asks
+        # whether what it emits is present, and what it emits was.
+        self.css.write_text(
+            "  --ground: a;\n  --ground: b;\n  --ground: STALE;\n"
+            "  --veil: a;\n  --veil: b;\n  --ink: a;\n  --ink: b;\n",
+            encoding="utf-8",
+        )
+        before = self.css.read_text(encoding="utf-8")
+        self.assertEqual(write(DOC, [self.dest()]), 1)
+        self.assertEqual(self.css.read_text(encoding="utf-8"), before)
+
+    def test_write_refuses_a_rewrite_that_would_change_indentation(self):
+        self.css.write_text(
+            "  --ground: a;\n    --ground: b;\n  --veil: a;\n  --veil: b;\n"
+            "  --ink: a;\n  --ink: b;\n",
+            encoding="utf-8",
+        )
+        before = self.css.read_text(encoding="utf-8")
+        self.assertEqual(write(DOC, [self.dest()]), 1)
+        self.assertEqual(self.css.read_text(encoding="utf-8"), before)
+
+    def test_verify_does_not_accept_a_declaration_hiding_inside_a_deeper_one(self):
+        # Reported by a consumer: a declaration indented two spaces is a
+        # SUBSTRING of the same one indented four, so corrupting only the flat
+        # copy left the check green — it found the string it wanted inside the
+        # nested line that was still correct.
+        deep = Destination(
+            self.css,
+            lambda n, e: [f'  --{n}: {css_value(e["$value"]["light"])};',
+                          f'    --{n}: {css_value(e["$value"]["dark"])};'],
+            css_pattern,
+            label="CSS",
+        )
+        good = ("  --ground: #F4F4F4;\n    --ground: #161616;\n"
+                "  --veil: rgba(16, 16, 16, 0.08);\n    --veil: rgba(255, 255, 255, 0.12);\n"
+                "  --ink: #111111;\n    --ink: #EEEEEE;\n")
+        self.css.write_text(good, encoding="utf-8")
+        self.assertEqual(verify(DOC, [deep]), 0)
+        # Corrupt ONLY the flat one. Its correct text still occurs, inside the
+        # nested line.
+        self.css.write_text(good.replace("  --ground: #F4F4F4;", "  --ground: #DEAD00;"),
+                            encoding="utf-8")
+        self.assertEqual(verify(DOC, [deep]), 1)
+
+    def test_verify_counts_repeats_rather_than_finding_one_and_stopping(self):
+        # A token declared twice with identical text has to BE there twice.
+        twice = Destination(
+            self.css,
+            lambda n, e: [f'  --{n}: {css_value(e["$value"]["dark"])};'] * 2,
+            css_pattern,
+            label="CSS",
+        )
+        self.css.write_text("  --ground: #161616;\n  --veil: rgba(255, 255, 255, 0.12);\n"
+                            "  --veil: rgba(255, 255, 255, 0.12);\n"
+                            "  --ink: #EEEEEE;\n  --ink: #EEEEEE;\n", encoding="utf-8")
+        self.assertEqual(verify(DOC, [twice]), 1)
 
     def test_write_refuses_when_no_pattern_matches_at_all(self):
         self.css.write_text("nothing here\n", encoding="utf-8")

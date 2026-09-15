@@ -98,22 +98,65 @@ def rewrite_declarations(text: str, pattern: re.Pattern, values: Iterable[str]) 
     `values` is consumed lazily, so a destination that declares a token once
     takes the first value and a stylesheet that declares it in a light block
     and a dark block takes both, with no list of which files carry which.
-    Returns the new text and how many declarations were actually replaced —
-    the count is the caller's evidence, never this function's assumption.
+
+    Returns the new text, how many were replaced, how many the pattern
+    MATCHED, and how many replacements would change the line's indentation.
+
+    The first two differ exactly when the file says a token more times than the
+    caller emits for it. The last one catches a different mistake, and one
+    easy to make: a pattern that swallows the leading whitespace, paired with
+    declarations written at one fixed indentation. The same token often sits at
+    two depths — a light block at the top level and a dark one nested inside a
+    media query — and rewriting both from one string silently re-indents the
+    nested one. Nothing about the values is wrong, so no diff of the values
+    shows it, and the file still verifies. Found by running this against a real
+    consumer's stylesheet and watching four-space declarations come back with
+    two.
     """
     it = iter(values)
     replaced = 0
+    matched = 0
+    reindented = 0
+    lead = re.compile(r"^[ \t]*")
 
     def swap(match: re.Match) -> str:
-        nonlocal replaced
+        nonlocal replaced, matched, reindented
+        matched += 1
         try:
             value = next(it)
         except StopIteration:
             return match.group(0)
         replaced += 1
+        found = match.group(0)
+        if lead.match(found).group(0) != lead.match(value).group(0):
+            reindented += 1
         return value
 
-    return pattern.sub(swap, text), replaced
+    return pattern.sub(swap, text), replaced, matched, reindented
+
+
+def _stripped(text: str) -> list[str]:
+    return [line.strip() for line in text.splitlines()]
+
+
+def count_block(haystack: list[str], needle: list[str]) -> int:
+    """How many times `needle` appears as consecutive lines of `haystack`.
+
+    Line-aligned and whitespace-normalised, which is the whole point. Asking
+    `decl in text` instead looks right and is not: a declaration indented two
+    spaces is a SUBSTRING of the same declaration indented four, so a
+    stylesheet that carries a token at both depths — a nested media query and a
+    flat override — verifies green while one of the two is corrupt, because the
+    string being searched for is found hiding inside the other. Reported by a
+    consumer whose file has exactly that shape.
+
+    Counting rather than merely finding, for the other half of the same
+    problem: present-somewhere says nothing about present-everywhere.
+    """
+    if not needle:
+        return 0
+    n = len(needle)
+    return sum(1 for i in range(len(haystack) - n + 1) if haystack[i : i + n] == needle)
 
 
 @dataclass(frozen=True)
@@ -151,15 +194,47 @@ def verify(doc: dict, destinations: list[Destination], group: str = "color") -> 
     absorbable result there is (see `docs/guardas.md`).
     """
     texts = {d.path: Path(d.path).read_text(encoding="utf-8") for d in destinations}
+    lines = {p: _stripped(t) for p, t in texts.items()}
     missing: list[str] = []
     checked = 0
 
     for name, entry in flat(doc, group):
         for dest in destinations:
-            for decl in dest.declarations(name, entry):
-                checked += 1
-                if decl not in texts[dest.path]:
-                    missing.append(f"{dest.name()}  {decl.strip()}")
+            decls = dest.declarations(name, entry)
+            checked += len(decls)
+            # Grouped, so a token declared twice with the same text has to be
+            # there twice. Finding it once and calling that done is how a
+            # stale second copy survives the check that exists to catch it.
+            wanted: dict[tuple[str, ...], int] = {}
+            for decl in decls:
+                key = tuple(_stripped(decl))
+                wanted[key] = wanted.get(key, 0) + 1
+            for key, times in wanted.items():
+                found = count_block(lines[dest.path], list(key))
+                if found < times:
+                    where = " / ".join(key)
+                    missing.append(
+                        f"{dest.name()}  {where}"
+                        + (f"  (aparece {found} de {times} veces)" if times > 1 else "")
+                    )
+
+            # And the same question `write` asks: does the file declare this
+            # token somewhere these declarations do not cover? Asking it here
+            # too is what puts it in CI rather than only in front of whoever
+            # runs --write. A copy nobody emits keeps its old value through
+            # both, and the check that exists to find exactly that would say
+            # nothing — reported by a consumer whose stylesheet declares each
+            # token three times against a callback returning two.
+            if decls:
+                pattern = dest.pattern(name, entry)
+                if pattern is not None:
+                    seen = len(pattern.findall(texts[dest.path]))
+                    if seen > len(decls):
+                        missing.append(
+                            f"{dest.name()}  {name} aparece {seen} vez(ces) en el archivo "
+                            f"y sólo se emiten {len(decls)} declaración(es): "
+                            "las otras nunca se reescriben"
+                        )
 
     if checked == 0:
         print("  nada que verificar: ningún destino declara ningún token")
@@ -195,15 +270,34 @@ def write(doc: dict, destinations: list[Destination], group: str = "color") -> i
             pattern = dest.pattern(name, entry)
             if pattern is None:
                 continue
-            new, count = rewrite_declarations(updated[dest.path], pattern, decls)
-            # A token the file does not name is a no-op and legitimate: that is
-            # how a subset stays a subset. A token it names in FEWER places
-            # than this would write is not — it means the pattern matched some
-            # of them, which leaves the file internally inconsistent.
-            if 0 < count < len(decls):
+            new, count, matched, reindented = rewrite_declarations(
+                updated[dest.path], pattern, decls
+            )
+            if reindented:
                 problems.append(
-                    f"{dest.name()}: {name} coincide {count} vez(ces) y se emiten "
-                    f"{len(decls)} declaraciones"
+                    f"{dest.name()}: {name} cambiaría la indentación de {reindented} "
+                    "declaración(es) — el patrón se come el espacio inicial y las "
+                    "declaraciones lo traen fijo"
+                )
+            # A token the file does not name at all is a no-op and legitimate:
+            # that is how a subset stays a subset. Anything between zero and
+            # agreement is not, and it is wrong in BOTH directions.
+            #
+            # Too FEW matches means only some of a token's declarations were
+            # rewritten, leaving the file internally inconsistent.
+            #
+            # Too MANY means the file says this token somewhere this does not
+            # write, and that one keeps its old value — through the write, and
+            # then through verify as well, because verify only asks whether
+            # what it emits is present. A consumer whose stylesheet declares
+            # every token three times while its callback returns two would have
+            # carried a stale third copy past both guards, silently and
+            # for good. Found by reconciling two declaration counts that did
+            # not agree.
+            if matched and matched != len(decls):
+                problems.append(
+                    f"{dest.name()}: {name} aparece {matched} vez(ces) en el archivo "
+                    f"y se emiten {len(decls)} declaraciones"
                 )
             updated[dest.path] = new
             rewritten += count

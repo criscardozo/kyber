@@ -91,6 +91,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
   Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
   marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **Buscar un substring no es buscar una línea.** Una declaración indentada
+  con dos espacios es **substring exacto** de la misma indentada con cuatro, así
+  que un archivo que declara el mismo token a dos profundidades —un bloque
+  anidado y un override plano— verifica en verde con una de las dos corrupta:
+  el texto que se busca aparece, escondido adentro de la otra, que sigue bien.
+  Medido: la guarda vieja dijo «las 78 declaraciones coinciden» sobre un
+  archivo que acababa de romperse a mano. Comparar por **línea**, normalizando
+  la indentación, y **contar** las repeticiones — encontrar una vez no dice
+  nada sobre estar todas las veces.
 - **Un conteo absorbe el error sin verse mal.** Tercera vez que un comentario
   se cuela en un parseo, y la primera que no falla ruidosamente: las anteriores
   devolvieron un bloque equivocado y una guarda marcándose a sí misma; ésta
