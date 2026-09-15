@@ -360,6 +360,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   pregunta no es *¿falló?* sino *¿falló el que corresponde?* Una guarda que se
   pone verde con un arreglo parcial es peor que ninguna, porque tiene forma de
   haber funcionado.
+- **Con la rama principal en rojo, primero se vuelve al verde y después se
+  entiende.** Diagnosticar lleva un tiempo que no se conoce de antemano — en un
+  caso fueron tres sondas, una tras otra, y las tres resultaron incapaces de
+  contestar lo que se les preguntaba. Empezar por entender deja el repo roto
+  durante todo eso, y encima apura el diagnóstico, que es cuando se elige la
+  primera explicación plausible. Revertir es barato y reversible; el
+  entendimiento sale igual de bien después, y sin presión.
 - **Verificar un estado y publicar otro no es verificar.** El caso: encontrar el
   bug parchando el árbol de trabajo, confirmar que pasa **con** el parche,
   revertirlo y publicar — con lo que lo medido y lo entregado difieren
@@ -439,6 +446,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   orden del `font-size` y en una palabra es varias veces más — el control dio
   247 px contra 19 de `font-size`. Antes de escribir una sonda, preguntarse qué
   valor devuelve cuando la cosa está rota; si es el mismo, la sonda no existe.
+
+  Y un nivel más arriba: **un barrido del código fuente tiene un punto ciego
+  abierto — las formas que nadie pensó.** El que sostenía esa lista conocía
+  cuatro maneras de escribir un ícono; la quinta, un wrapper que pasa el nombre
+  por otra prop, era invisible. Así viajó a producción el ícono del botón de la
+  primera pantalla, y **lo encontró una persona mirando el navegador**, porque
+  no había nada en el repo que pudiera verlo. Agregar el quinto patrón no cierra
+  nada: el conjunto de formas no tiene final. Lo que lo cierra es una guarda en
+  el **resultado renderizado**, que no necesita conocer ninguna.
 - **Un encabezado le presta su afirmación a todo lo que cuelga de él.** Una
   lista titulada «lo que este proyecto tomó de aquél» le atribuye esa
   procedencia a cada ítem, incluidos los que nadie tomó de ahí. Al verificar
