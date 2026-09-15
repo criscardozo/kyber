@@ -98,4 +98,6 @@ async function main() {
   process.exit(1);
 }
 
-run(main);
+run(main, {
+  usage: "Usage: node kyber/scripts/check-rules-drift.mjs\n  Takes no arguments.",
+});

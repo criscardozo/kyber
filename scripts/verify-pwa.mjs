@@ -135,4 +135,6 @@ async function main() {
   process.exit(failures === 0 ? 0 : 1);
 }
 
-run(main);
+run(main, {
+  usage: "Usage: node kyber/scripts/verify-pwa.mjs\n  Takes no arguments.",
+});
