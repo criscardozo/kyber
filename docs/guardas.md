@@ -429,6 +429,22 @@ midiendo, en las dos apps, y por eso viajan juntas.
   lo re-ejecutaba, con conteos viejos y peldaños nuevos que ya cruzaban el
   mínimo. Un generador que nadie corre volvió a ser un espejo, que es lo que
   se quería dejar de tener.
+- **Generar no arregla una fuente que nadie decidió: la congela con autoridad
+  de herramienta.** Antes de emitir, la pregunta no es si el generador
+  funciona, es si lo que va a leer es una decisión o un accidente. Medido en
+  dos apps el mismo día, sin que ninguna supiera de la otra: al inventariar un
+  grupo de tokens por **rol** —clasificando por la firma que acompaña a cada
+  uso, no por el nombre del componente— apareció en las dos el mismo hallazgo,
+  un solo rol con tres valores distintos. En una, 19 usos contra 6 contra 3,
+  más un cuarto valor en la otra plataforma; en la otra app, cuatro instancias
+  del mismo control con tres valores y tres tamaños de caja. Ninguno de esos
+  números estaba escrito en ningún lado como decisión: quedaron así. Emitir
+  desde ahí no deja el desorden como estaba, lo empeora — después el número
+  arbitrario tiene nombre, tipo y un generador atrás, y eso se discute mucho
+  menos que un literal suelto. El orden es reconciliar primero y generar
+  después, y reconciliar lo hace una persona. Es la misma frontera que «una
+  guarda no puede fallar por una decisión que nadie tomó», del otro lado: ni
+  el verificador la inventa, ni el emisor la escribe.
 - **Un generador que emite strings mueve el fallo al parseo, y ahí muere en
   silencio.** Pasar un color de `0xF4F4F4` a `"#F4F4F4"` cambia un error de
   compilación por uno de runtime: el parser de hex de la plataforma **no
