@@ -310,6 +310,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
 
 ### La verificación tiene que estar encadenada
 
+- **Al arreglar algo, la pregunta no es «¿lo arreglé?» sino «¿dónde MÁS pasa
+  esto?».** Un arreglo escrito en el archivo donde apareció el síntoma arregla
+  ese archivo y nada más, y deja la forma viva en todos los demás con la
+  sensación de estar resuelta — que es peor que no haberla tocado, porque ya
+  figura como hecha. Medido acá, y caro: la bandera que alguien tipea para
+  preguntar qué hace un comando estaba corriendo el comando. Se arregló una vez,
+  en el script donde se notó, escribiendo el chequeo adentro de ese archivo.
+  **Seis de los ocho scripts del repo siguieron rotos**, hasta que en uno de
+  ellos un `--help` disparó un volcado entero contra producción. El arreglo
+  bueno no era repetir el chequeo ocho veces: era ponerlo en el punto de
+  entrada que los ocho ya llamaban, donde el próximo script lo hereda sin que
+  nadie se acuerde. La regla llegó del catálogo de un consumidor y acá se había
+  rechazado por sonar a corolario; la segunda instancia la produjo quien la
+  rechazó.
 - **Verificar un estado y publicar otro no es verificar.** El caso: encontrar el
   bug parchando el árbol de trabajo, confirmar que pasa **con** el parche,
   revertirlo y publicar — con lo que lo medido y lo entregado difieren
