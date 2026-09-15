@@ -28,6 +28,12 @@ cd "$(git rev-parse --show-toplevel)"
 # remember two, which is the duplication this whole repo exists to remove,
 # sitting in its own guard. Found when a consumer noticed two of ITS sweeps
 # had drifted apart the same way.
+#
+# `check` no longer enumerates directories either, for the same reason one step
+# down: it listed four, and `firebase/` was not one of them, so a tracked .mjs
+# went unparsed for as long as it existed — the old command ran green over a
+# deliberately broken copy of it. The file set now comes from `git ls-files`,
+# which includes this hook.
 echo "pre-push: syntax"
 npm run -s check
 

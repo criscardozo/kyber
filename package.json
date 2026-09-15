@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "node --test && python3 -m unittest discover -q -s test -p 'test_*.py' > /dev/null",
-    "check": "for f in scripts/*.mjs scripts/lib/*.mjs test/*.mjs design/*.mjs; do node --check \"$f\" || exit 1; done && python3 -m compileall -q design test"
+    "check": "git ls-files '*.mjs' | xargs -I{} node --check {} && git ls-files '*.py' | xargs python3 -m py_compile && git ls-files '.githooks/*' | xargs -I{} bash -n {}"
   },
   "peerDependencies": {
     "firebase-admin": ">=14",
@@ -17,8 +17,14 @@
     "vitest": ">=4"
   },
   "peerDependenciesMeta": {
-    "firebase-admin": { "optional": true },
-    "firebase-tools": { "optional": true },
-    "vitest": { "optional": true }
+    "firebase-admin": {
+      "optional": true
+    },
+    "firebase-tools": {
+      "optional": true
+    },
+    "vitest": {
+      "optional": true
+    }
   }
 }
