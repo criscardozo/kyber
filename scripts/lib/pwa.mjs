@@ -8,7 +8,21 @@
 
 import { KyberError } from "./errors.mjs";
 
-const REQUIRED = ["port", "entry", "precachedRoutes", "minStaticAssets", "offlineText", "deepRoute"];
+/**
+ * The keys a `pwa` block must carry. Exported so the test derives its list
+ * from this one instead of keeping a second copy: a hand-written list in a
+ * guard is an uncoupled copy even when every entry it holds is checked, and
+ * what it stops checking is its own MEMBERSHIP. Add a key here and a test
+ * naming five would go on naming five.
+ */
+export const REQUIRED = [
+  "port",
+  "entry",
+  "precachedRoutes",
+  "minStaticAssets",
+  "offlineText",
+  "deepRoute",
+];
 
 /** Everything wrong with a consumer's `pwa` block, named. */
 export function pwaProblems(pwa) {
