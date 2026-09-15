@@ -212,15 +212,38 @@ class Destination:
     layout it might be in. A destination whose file wraps a long declaration
     has to match both the wrapped and the unwrapped form, or `--write` rewrites
     one layout into the other and produces a diff that is not a value change.
+
+    `subset=True` says the file carries only SOME of the tokens, and which ones
+    is read from the file itself: a token whose pattern finds nothing there is
+    not this destination's. That is what the paragraph above asks for, and the
+    flag exists because asking was not enough. A consumer read that sentence,
+    wired three destinations, and still typed out eight identifiers for its
+    watch target — which then disagreed with the nine the file declared, so the
+    ninth was silently outside the generator and drifted on the next write.
+    Prose describing a property does not stop the obvious implementation; the
+    obvious implementation has to be the right one.
+
+    What this does NOT catch is the other direction: a file MISSING a token it
+    should carry looks the same as a subset declining it. That is a question
+    about intent, which the file cannot answer, so it stays with the consumer's
+    own test that its theme declares what it should.
     """
 
     path: Path
     declarations: Callable[[str, dict], list[str]]
     pattern: Callable[[str, dict], re.Pattern | None]
     label: str = ""
+    subset: bool = False
 
     def name(self) -> str:
         return self.label or Path(self.path).name
+
+    def carries(self, name: str, entry: dict, text: str) -> bool:
+        """Does this destination own this token? Every one, unless a subset."""
+        if not self.subset:
+            return True
+        pattern = self.pattern(name, entry)
+        return pattern is not None and pattern.search(text) is not None
 
 
 def verify(doc: dict, destinations: list[Destination],
@@ -239,6 +262,8 @@ def verify(doc: dict, destinations: list[Destination],
 
     for name, entry in tokens_of(doc, groups):
         for dest in destinations:
+            if not dest.carries(name, entry, texts[dest.path]):
+                continue
             decls = dest.declarations(name, entry)
             checked += len(decls)
             # Grouped, so a token declared twice with the same text has to be
@@ -304,6 +329,8 @@ def write(doc: dict, destinations: list[Destination],
 
     for name, entry in tokens_of(doc, groups):
         for dest in destinations:
+            if not dest.carries(name, entry, updated[dest.path]):
+                continue
             decls = dest.declarations(name, entry)
             if not decls:
                 continue

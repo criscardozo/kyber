@@ -111,6 +111,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   mitades, porque una exclusión probada de un solo lado no distingue «lo
   ignoró» de «no escaneó nada»: un archivo plantado bajo una ruta ignorada
   tiene que quedar afuera **y** uno plantado sin stagear tiene que contarse.
+- **La prosa que describe una propiedad no impide la implementación obvia.**
+  La documentación de una API decía, con todas las letras, que un destino
+  parcial se mantiene parcial **sin una lista que mantener**: el archivo nombra
+  los suyos y el resto se declina. Quien la cableó la leyó, y escribió la lista
+  igual — ocho identificadores a mano contra los nueve que el archivo
+  declaraba, así que el noveno quedó fuera del generador y divergió en la
+  escritura siguiente, con la verificación en verde porque no lo consideraba
+  suyo. Tenía la regla adelante y puso la excepción. **Si la forma correcta no
+  es la más cómoda, la prosa pierde**: lo que lo arregla es que la API la
+  ofrezca —una bandera, un helper— no una advertencia mejor redactada.
 - **Si hay varios barridos, el conjunto de archivos se decide UNA vez.** Dos
   guardas hermanas, escritas el mismo día por la misma persona y en el mismo
   directorio, discreparon: una usaba `git ls-files` a secas y la otra
