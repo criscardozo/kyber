@@ -52,20 +52,46 @@ def load(path: Path) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
+def _is_token(node) -> bool:
+    return isinstance(node, dict) and "$value" in node
+
+
 def flat(doc: dict, group: str = "color") -> list[tuple[str, dict]]:
     """Every token in a group as (name, entry), in the document's own order.
 
     The order is the file's, not sorted: a generated block that reorders its
     declarations produces a diff on every unrelated change, and a diff nobody
     can read is a diff nobody reads.
+
+    Groups nest to different depths and both are legitimate DTCG. Colours are
+    grouped by role — `color.surface.ground` — while radii sit directly under
+    theirs, `radius.card`. The first version assumed two levels everywhere,
+    which read the radius group one level too deep and returned each token's
+    `$extensions` dict as if it were a token.
+
+    It returned SIX of them for a file with six radii, and five for a file with
+    five: the wrong answer with the right count. A sanity check on the length
+    would have passed. That is the whole reason this walks by looking for
+    `$value` rather than by counting levels, and the reason the fixture for it
+    now carries both shapes — the earlier one had only the nested one, so it
+    reproduced the mechanism and not the shape.
+
+    Keys beginning with `$` are DTCG metadata (`$description`), never tokens.
     """
-    return [
-        (name, entry)
-        for subgroup in doc.get(group, {}).values()
-        if isinstance(subgroup, dict)
-        for name, entry in subgroup.items()
-        if isinstance(entry, dict)
-    ]
+    node = doc.get(group, {})
+    if not isinstance(node, dict):
+        return []
+    out: list[tuple[str, dict]] = []
+    for name, child in node.items():
+        if name.startswith("$") or not isinstance(child, dict):
+            continue
+        if _is_token(child):
+            out.append((name, child))
+            continue
+        for inner, entry in child.items():
+            if not inner.startswith("$") and _is_token(entry):
+                out.append((inner, entry))
+    return out
 
 
 def css_value(value) -> str:

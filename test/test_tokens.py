@@ -31,7 +31,15 @@ DOC = {
         },
         "text": {"ink": {"$value": {"light": "#111111", "dark": "#EEEEEE"}}},
     },
-    "radius": {"shape": {"card": {"$value": "18px"}}},
+    # Nested one level, the way both real files carry radii — and with the
+    # metadata key a real group has. The first fixture had only the two-level
+    # shape that colours use, so it reproduced the mechanism and not the
+    # shape, and the walker read this group one level too deep.
+    "radius": {
+        "$description": "not a token",
+        "card": {"$type": "dimension", "$value": "18px", "$extensions": {"uses": 11}},
+        "field": {"$type": "dimension", "$value": "10px"},
+    },
 }
 
 
@@ -68,8 +76,19 @@ class Walk(unittest.TestCase):
         # unrelated change.
         self.assertEqual([n for n, _ in flat(DOC)], ["ground", "veil", "ink"])
 
-    def test_flat_reads_the_group_it_is_asked_for(self):
-        self.assertEqual([n for n, _ in flat(DOC, "radius")], ["card"])
+    def test_flat_reads_a_group_whose_tokens_sit_directly_under_it(self):
+        # Colours nest by role, radii do not, and both are legitimate. Reading
+        # this one as if it were nested returned each token's $extensions dict
+        # — six of them for six radii, the wrong answer with the right count.
+        self.assertEqual([n for n, _ in flat(DOC, "radius")], ["card", "field"])
+        self.assertEqual(flat(DOC, "radius")[0][1]["$value"], "18px")
+
+    def test_flat_skips_dollar_prefixed_metadata(self):
+        self.assertNotIn("$description", [n for n, _ in flat(DOC, "radius")])
+
+    def test_flat_reads_both_depths_from_one_document(self):
+        self.assertEqual(len(flat(DOC, "color")), 3)
+        self.assertEqual(len(flat(DOC, "radius")), 2)
 
     def test_an_absent_group_is_empty_not_an_error(self):
         self.assertEqual(flat(DOC, "spacing"), [])
