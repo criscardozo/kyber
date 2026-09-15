@@ -103,6 +103,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   las dependencias adentro. El mismo comando, una respuesta correcta y una
   falsa, según qué hubiera compilado alguien esa tarde. **Una medición cuya
   respuesta depende del estado de la máquina no es una medición del código.**
+
+  Para «los archivos fuente de este repo» las dos mitades se satisfacen con
+  una sola: `git ls-files --cached --others --exclude-standard`. Excluye lo
+  ignorado —el build— y **sí** ve el archivo nuevo que todavía no se stageó,
+  que es donde aparece la copia recién escrita. Y se prueba con las dos
+  mitades, porque una exclusión probada de un solo lado no distingue «lo
+  ignoró» de «no escaneó nada»: un archivo plantado bajo una ruta ignorada
+  tiene que quedar afuera **y** uno plantado sin stagear tiene que contarse.
+- **Al cambiar una sonda, la prueba de que cambiaste la sonda y no la medición
+  es que los números no se muevan.** Cambiar cómo se barre y ver otro total
+  deja sin saber cuál de las dos cosas pasó. Si el conjunto viejo y el nuevo
+  coinciden hoy, el cambio es un no-op sobre los datos y sólo movió el método
+  — que es exactamente lo que se quería. Si no coinciden, hay que poder
+  nombrar cada archivo de la diferencia antes de aceptar el número nuevo.
 - **La respuesta equivocada con el conteo correcto es la peor de todas.** Un
   recorredor asumía que todos los grupos anidan dos niveles. Los colores sí
   —`color.surface.ground`— y los radios no: van directo bajo el suyo. Leído un
@@ -245,6 +259,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   mínimo de contraste en una sola plataforma durante meses, y lo que lo destapó
   fue generar, no comparar. Cuando hay una fuente posible, la elección por
   defecto es generar y verificar con un `diff` que falle.
+
+  Con dos condiciones que el generador tiene que cumplir sobre sí mismo. Una,
+  **ser idempotente**: uno que escapaba a `\uXXXX` los guiones largos que el
+  archivo ya tenía producía, al regenerar, un diff que no era un cambio de
+  valor — y un diff que no significa nada entrena a ignorar los que sí. Dos,
+  **correrse**: el mismo generador acumuló 131 líneas de deriva porque nadie
+  lo re-ejecutaba, con conteos viejos y peldaños nuevos que ya cruzaban el
+  mínimo. Un generador que nadie corre volvió a ser un espejo, que es lo que
+  se quería dejar de tener.
 - **Comparar todo lo que hay no es comparar que esté todo.** Una lista escrita a
   mano sólo prueba que lo que nombra coincide. La lista se contrasta contra el
   árbol (los archivos, las colecciones raíz) y la guarda **nombra lo que
