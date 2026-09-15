@@ -283,7 +283,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   mano, y `firebase/` no estaba entre ellos, así que un `.mjs` trackeado nunca
   se parseó — la orden vieja termina en verde sobre una copia rota a propósito
   de ese archivo. Una lista que gatea comportamiento no avisa cuando le falta
-  algo; avisa cuando lo que le falta se rompe, que es tarde.
+  algo; avisa cuando lo que le falta se rompe, que es tarde. Cuatro veces en un
+  día entre tres repos, y **dos de las cuatro adentro de código escrito para
+  eliminar exactamente esta forma**: un extractor que enumeraba a mano los
+  roles que debía extraer —se le agregaron dos al archivo fuente, se reextrajo,
+  y salieron ausentes con todo en verde— y el chequeo de sintaxis de acá. Ahí
+  hay que buscarla primero, porque es donde nadie mira: la herramienta que
+  existe para sacar las copias es la última sospechosa de tener una.
 - **La falla que no cambia el color de nada es la que hay que ir a buscar.** El
   caso: un submódulo privado que el deploy no podía clonar salía como una línea
   de `Warning:` y el build seguía — verde, sin el submódulo. Ninguna guarda de
