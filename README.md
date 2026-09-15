@@ -379,6 +379,20 @@ out not to qualify for reasons nobody had guessed:
 - **The reusable backup workflow is in**, approved. It was byte-identical in
   both consumers apart from two sentences of comment.
 
+  What the one-liner at the top of this file says and nobody costed: **the
+  minutes are the caller's**. A `workflow_call` bills every minute against the
+  repository that calls it, so the shared workflow moves the code and not the
+  bill. That is the right split, but it means the cost of this layer is
+  invisible from here — nothing in this repo gets slower or more expensive
+  when a consumer's cadence goes up.
+
+  And the cadence is what spends it, not the size of the change: a consumer
+  running three jobs per push pays per push. A private repo's free allowance
+  is shared across the whole account, so one consumer's busy week is the other
+  consumer's outage. That is not hypothetical — one of them ran out mid-month
+  and its scheduled backup simply stopped getting a runner, silently enough
+  that it was found while doing something else.
+
 The **pre-push hook** is now earned in two — both consumers have one, and so
 does this repo — and it still does not come in, under the second clause of the
 filter. What they share is a for-loop: run these commands in order, stop at
