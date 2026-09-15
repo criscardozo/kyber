@@ -530,6 +530,49 @@ class Blocks(unittest.TestCase):
         self.assertEqual(self.swift.read_text(encoding="utf-8"), before)
         self.assertIn("--ground: #OLD;", other.read_text(encoding="utf-8"))
 
+    def test_the_first_write_keeps_the_closing_anchor_where_it_was(self):
+        # The anchors a consumer writes carry their own indentation, and the
+        # anchor STRINGS do not: they name the marker, not the margin. With an
+        # empty region the two are adjacent, and the span used to end at the
+        # `//` instead of at the start of its line — so the first write, the
+        # one right after somebody typed those two lines by hand, ate the
+        # closing anchor's indent. Reported by the consumer that wired it
+        # first, reproduced in isolation before anything was changed.
+        #
+        # Every earlier block test had the margin INSIDE the anchor string, so
+        # the fixture reproduced the mechanism and not the shape and this
+        # could never fire.
+        bare_begin, bare_end = "// kyber:radius start", "// kyber:radius end"
+        self.swift.write_text(
+            f"enum Theme {{\n    {bare_begin}\n    {bare_end}\n}}\n", encoding="utf-8"
+        )
+        blk = Block(self.swift, radius_lines, bare_begin, bare_end, label="radios")
+        self.assertEqual(write(DOC, [blk], "radius"), 0)
+        out = self.swift.read_text(encoding="utf-8")
+        self.assertIn(f"    {bare_end}\n", out)
+        self.assertIn(f"    {bare_begin}\n", out)
+        self.assertIn("    static let card: CGFloat = 18\n", out)
+
+    def test_it_stays_put_across_writes_with_bare_anchors(self):
+        bare_begin, bare_end = "// kyber:radius start", "// kyber:radius end"
+        self.swift.write_text(
+            f"enum Theme {{\n    {bare_begin}\n    {bare_end}\n}}\n", encoding="utf-8"
+        )
+        blk = Block(self.swift, radius_lines, bare_begin, bare_end, label="radios")
+        write(DOC, [blk], "radius")
+        once = self.swift.read_text(encoding="utf-8")
+        write(DOC, [blk], "radius")
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), once)
+
+    def test_both_anchors_on_one_line_is_refused(self):
+        # Splicing whole lines into the middle of a line produces something
+        # nobody wrote, so this is a malformed pair rather than an empty one.
+        bare_begin, bare_end = "// start", "// end"
+        self.swift.write_text(f"    {bare_begin} {bare_end}\n", encoding="utf-8")
+        blk = Block(self.swift, radius_lines, bare_begin, bare_end, label="radios")
+        with self.assertRaises(AnchorError):
+            blk.body(self.swift.read_text(encoding="utf-8"))
+
     def test_a_block_and_a_rewrite_destination_share_one_file(self):
         self.swift.write_text(
             "enum Theme {\n"

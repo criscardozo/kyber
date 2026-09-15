@@ -287,16 +287,31 @@ class Block:
                 raise AnchorError(
                     f"{self.name()}: el ancla {what} ({anchor!r}) aparece {seen} veces"
                 )
-        start = text.index(self.begin) + len(self.begin)
-        stop = text.index(self.end)
-        if stop < start:
+        begin_at = text.index(self.begin)
+        end_at = text.index(self.end)
+        if end_at < begin_at:
             raise AnchorError(
                 f"{self.name()}: el ancla de cierre está antes que la de apertura"
             )
-        # From the newline after `begin` to the start of the line `end` is on,
-        # so the anchors themselves are never part of what gets replaced.
-        start = text.index("\n", start) + 1 if "\n" in text[start:stop] else start
-        stop = text.rindex("\n", start, stop) + 1 if "\n" in text[start:stop] else stop
+        # Whole lines, and each edge found on its own. The anchor STRINGS name
+        # the marker, not the margin — the indentation belongs to the lines the
+        # consumer typed — so the region starts after the newline that ends
+        # `begin`'s line and stops at the start of `end`'s line.
+        #
+        # Computed independently because deriving one from the other is what
+        # broke: with an empty region the text between the two anchors is just
+        # the closing one's indent and holds no newline, so a conditional that
+        # only moved `stop` back when it found one left the span sitting on
+        # those spaces and the FIRST write swallowed them. Only the first,
+        # which is the write right after somebody typed those two lines by
+        # hand. Reported by the consumer that wired this first.
+        newline = text.find("\n", begin_at + len(self.begin))
+        start = len(text) if newline == -1 else newline + 1
+        stop = text.rfind("\n", 0, end_at) + 1
+        if stop < start:
+            raise AnchorError(
+                f"{self.name()}: las dos anclas están en la misma línea"
+            )
         return start, stop
 
     def splice(self, text: str, lines: list[str]) -> str:
