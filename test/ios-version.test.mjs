@@ -74,6 +74,12 @@ test("a substitution is caught, which is what a count cannot do", () => {
   // Swap one target for another: still three carrying MARKETING_VERSION, so
   // `found.length === 3` passes while the version now moves somewhere nobody
   // named and stops moving where somebody expected it.
+  //
+  // The exact 3 below is deliberate and must stay exact: the population is
+  // this file's own fixture, and the whole point is that the count does NOT
+  // move under a substitution. A floor here would delete the test's meaning.
+  // Said out loud because a consistency pass that turns counts into floors
+  // would otherwise read it as the one somebody forgot.
   const swapped = YAML.replace("  AppWatch:", "  AppClip:");
   const targets = readTargets(swapped);
   assert.equal([...targets.values()].filter((t) => t.marketingVersion !== undefined).length, 3);

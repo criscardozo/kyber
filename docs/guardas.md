@@ -271,6 +271,12 @@ midiendo, en las dos apps, y por eso viajan juntas.
   exacto falla el día que alguien agrega uno **bien**, con un mensaje que no
   nombra nada y que pide subir el número a mano: la lista mantenida a mano
   entrando por otra puerta. Ahí va piso, más la afirmación por nombre.
+
+  Y como toda regla de dos ramas, **una instancia correcta de la rama menos
+  común se lee como un descuido**: el exacto que quedó exacto a propósito
+  parece el que faltó cambiar, y la próxima pasada de consistencia lo convierte
+  en piso y debilita la guarda. Así que dice al lado en qué rama está y por
+  qué. Una regla con dos ramas necesita que cada caso declare la suya.
 - **Medir el proxy no es medir la cosa.** La familia entera de errores de un
   día: comparar archivos por **nombre** en vez de por lo que exportan, juzgar si
   dos funciones son iguales por su **cantidad de caracteres**, leer un diff
