@@ -536,6 +536,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
 
 ### Trabajar con otros
 
+- **Antes de reportar un defecto en el código de otro, el control positivo no
+  es opcional: el costo de equivocarse no es simétrico.** Un falso verde deja
+  un bug adentro y espera. Un falso rojo **acusatorio** hace que alguien vaya a
+  romper algo que andaba, y gasta la confianza del que recibe el reporte, que
+  es justo lo que hace que el próximo reporte cierto se lea entero. Tres veces
+  en un día entre tres sesiones, las tres a un paso de mandarse: un grep de
+  nombres del **seed** corrido sobre datos **reales** —que no podía
+  encontrarlos— concluyendo que un script de backup no respalda nada; un conteo
+  de encabezados al nivel equivocado dando 1 donde había 7; y un grep de una
+  línea buscando frases que cortan de línea, dando cero sobre texto que estaba
+  ahí. Las tres se salvaron del mismo modo: abriendo el artefacto a mirar su
+  estructura, en vez de confiar en un patrón que ya venía con la respuesta
+  esperada puesta. Cuando el resultado de una sonda va a ser una acusación,
+  hacerla fallar a propósito primero le toca a quien la escribe.
 - **Un relay hereda la confianza del emisor y pierde su procedencia.** Un dato
   ajeno **se siente** conocido después de pasar por dos manos, y ahí es donde
   se afirma sin haberlo mirado. Pasó tres veces en un día entre tres sesiones,
