@@ -590,6 +590,40 @@ class Blocks(unittest.TestCase):
         self.assertIn("    static let card: CGFloat = 18", out)
         self.assertEqual(verify(DOC, both, ["color", "radius"]), 0)
 
+    def test_a_shared_file_is_written_and_listed_once(self):
+        # Reported by a consumer whose theme takes colours by line and radii
+        # as a block: the report named the same file twice, which is correct
+        # and unreadable. Iterating destinations also wrote it twice.
+        import io
+        from contextlib import redirect_stdout
+
+        self.swift.write_text(
+            "enum Theme {\n"
+            "  --ground: #OLD;\n  --ground: #OLD;\n"
+            "  --veil: a;\n  --veil: b;\n"
+            "  --ink: a;\n  --ink: b;\n"
+            f"{BEGIN}\n{END}\n}}\n",
+            encoding="utf-8",
+        )
+        colours = Destination(self.swift, colour_decls, colour_pattern, label="colours")
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(write(DOC, [colours, self.block()], ["color", "radius"]), 0)
+        self.assertEqual(out.getvalue().count(str(self.swift)), 1)
+
+    def test_a_second_run_says_nothing_changed_rather_than_listing_files(self):
+        # Same declaration count, different fact about the disk.
+        import io
+        from contextlib import redirect_stdout
+
+        self.file()
+        write(DOC, [self.block()], "radius")
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(write(DOC, [self.block()], "radius"), 0)
+        self.assertIn("ningún archivo cambió", out.getvalue())
+        self.assertNotIn(str(self.swift), out.getvalue())
+
     def test_a_rewrite_reaching_inside_the_block_stops_the_run(self):
         # The overlap that would otherwise be invisible: the block replaces
         # its region whole and goes last, so the pattern's edit disappears
