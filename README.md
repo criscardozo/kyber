@@ -315,14 +315,24 @@ out not to qualify for reasons nobody had guessed:
   appearance. So destinations are plural, each with its own token subset. And
   a generator that writes colours as strings moves the failure to the parse,
   which is silent (see `docs/guardas.md`), so a consumer taking generated
-  colours needs the parse test with it. Radii are a second job, not more of
-  the same: one consumer names them by ROLE and the other by VALUE — `card`
-  and `sheet` against `r18` — which is a real choice with a cost each way, and
-  on iOS one consumer has no radius tokens at all, only bare numbers. There,
-  emitting radii CREATES the tokens rather than replacing them. And if it ever
-  rewrites sizes, it must not round to the most-used neighbour: what decides
-  where a value collapses is the function that consumes it, not how often each
-  candidate appears (see `docs/guardas.md`).
+  colours needs the parse test with it.
+
+  **Decided (Cristian, 2026-09-15): radii travel by ROLE** (`card`, `sheet`,
+  `field`), not by value (`r18`). A role survives the value changing under it;
+  a value forces a rename and a re-read of every call site the day two roles
+  stop sharing a number, or the day one starts sharing with another. The
+  consumer that names by value pays less than it looks for the rename, because
+  it does not consume those tokens from its own CSS — it types the numbers by
+  hand — so there is no generated output to keep in step while renaming.
+
+  **Radii are out of the FIRST pass, on purpose.** iOS has no radius tokens at
+  all in either consumer — bare numbers at every call site — so emitting radii
+  there CREATES a layer rather than replacing one, which is a materially
+  bigger job than colours. First pass is colours only; radii are noted for a
+  second pass once colours have shipped. And if it ever rewrites sizes, it
+  must not round to the most-used neighbour: what decides where a value
+  collapses is the function that consumes it, not how often each candidate
+  appears (see `docs/guardas.md`).
   The two projects solved the same problem in opposite directions: one
   generates the stylesheet and the Swift theme from a token file and proves it
   in CI with a diff, the other writes the palette twice and has a test
