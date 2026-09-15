@@ -76,4 +76,6 @@ async function main() {
   console.log(`${pins.length} kyber pin(s) agree with the submodule at ${gitlink.slice(0, 7)}.`);
 }
 
-run(main);
+run(main, {
+  usage: "Usage: node kyber/scripts/check-kyber-pins.mjs\n  Takes no arguments.",
+});

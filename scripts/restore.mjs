@@ -141,4 +141,10 @@ async function main() {
   }
 }
 
-run(main);
+run(main, {
+  usage:
+    "Usage: node kyber/scripts/restore.mjs [--production] <backup file>\n" +
+    "  Without --production it writes to the emulator.",
+  flags: ["--production"],
+  operands: 1,
+});

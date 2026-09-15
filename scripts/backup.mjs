@@ -97,4 +97,9 @@ async function main() {
   console.log(`\nBackup written to ${file}`);
 }
 
-run(main);
+run(main, {
+  usage:
+    "Usage: GOOGLE_APPLICATION_CREDENTIALS=<key.json> node kyber/scripts/backup.mjs\n" +
+    "  Dumps every root collection to backups/<name>-<source>-<stamp>.json.\n" +
+    "  Set FIRESTORE_EMULATOR_HOST to read the emulator instead of production.",
+});

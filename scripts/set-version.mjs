@@ -116,4 +116,7 @@ function read(path) {
   }
 }
 
-run(main);
+run(main, {
+  usage: "Usage: node kyber/scripts/set-version.mjs <major.minor.patch>",
+  operands: 1,
+});

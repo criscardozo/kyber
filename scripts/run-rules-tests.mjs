@@ -148,4 +148,6 @@ async function main() {
   });
 }
 
-run(main);
+run(main, {
+  usage: "Usage: node kyber/scripts/run-rules-tests.mjs\n  Takes no arguments.",
+});
