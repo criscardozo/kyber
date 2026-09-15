@@ -28,6 +28,18 @@ The consumer describes its destinations and calls `main()`:
         Destination(SWIFT, swift_decl, swift_pattern),
     ])
 
+A `Destination` needs the declaration to already be in the file. When it is
+not — a target that names none of the tokens yet — a `Block` owns the region
+between two anchors the consumer writes by hand, once, and replaces it whole:
+
+    main(DOC, [
+        Block(SWIFT, radius_line, "// kyber:radius start", "// kyber:radius end"),
+    ], groups="radius")
+
+The two mix in one file. Blocks are written last and refuse the run if a
+pattern reached inside their region, because the block would win and both
+halves would report success.
+
 Why `--write` matters more than it looks: before it, the token file MIRRORS
 the code and a test checks they have not drifted. After it the code is written
 FROM the token file, and the check becomes "regenerate and see that nothing
@@ -197,6 +209,106 @@ def count_block(haystack: list[str], needle: list[str]) -> int:
     return sum(1 for i in range(len(haystack) - n + 1) if haystack[i : i + n] == needle)
 
 
+class AnchorError(ValueError):
+    """The anchors of a block are not a single, ordered pair.
+
+    Its own class because it is the one thing a `Block` must never guess
+    about: given a file whose anchors are missing, doubled or inverted, the
+    tempting recoveries — take the first pair, insert at the end, create the
+    anchors — all write generated code into a place nobody chose.
+    """
+
+
+@dataclass(frozen=True)
+class Block:
+    """A destination that CREATES its declarations instead of rewriting them.
+
+    `Destination` needs every token to already sit somewhere in the file: it
+    finds a declaration with a pattern and swaps the value. That is the right
+    shape for a stylesheet or a theme that already names every token, and it
+    is the wrong one for a file that names none — both consumers' iOS targets
+    carry radii as bare numbers at every call site and have no constant for
+    any of them, so there is nothing to find.
+
+    So this one owns a REGION instead of a set of declarations: everything
+    between two anchors, which the consumer writes into the file by hand, once:
+
+        // kyber:radius start
+        // kyber:radius end
+
+    Anchors rather than "append at the end of the enum" or "insert after the
+    colours" because where generated code goes is a decision, and a decision
+    is written down by a person in the file it affects. It also makes the
+    write idempotent by construction — the region is replaced whole, so the
+    second run produces the same bytes as the first, which is the first thing
+    `docs/guardas.md` demands of a generator.
+
+    What it does NOT do, and the reason is worth keeping in front of whoever
+    wires it: defining the constants is half. Every call site still spells its
+    own number until somebody changes it by hand, and a consumer measured that
+    tokenising can TURN OFF the guard that used to catch those numbers — a
+    literal outside the scale stops being outside it once the scale names it.
+    The replacement guard belongs with the consumer, and it is written before
+    these tokens exist so its first run fails on its own.
+    """
+
+    path: Path
+    declarations: Callable[[str, dict], list[str]]
+    begin: str
+    end: str
+    label: str = ""
+
+    def name(self) -> str:
+        return self.label or Path(self.path).name
+
+    def render(self, doc: dict, groups: str | list[str]) -> list[str]:
+        """Every line the region should carry, in the document's own order."""
+        out: list[str] = []
+        for name, entry in tokens_of(doc, groups):
+            out.extend(self.declarations(name, entry))
+        return out
+
+    def body(self, text: str) -> tuple[int, int]:
+        """Character span of what lives between the anchors.
+
+        Raises rather than returning a best guess. Each of these has been a
+        real way to corrupt a file: two `begin` lines and the region silently
+        becomes whichever pair the search happens to bracket; an `end` above
+        its `begin` and the splice writes over everything in between,
+        backwards.
+        """
+        for anchor, what in ((self.begin, "de apertura"), (self.end, "de cierre")):
+            seen = text.count(anchor)
+            if seen == 0:
+                raise AnchorError(
+                    f"{self.name()}: falta el ancla {what} ({anchor!r})"
+                )
+            if seen > 1:
+                raise AnchorError(
+                    f"{self.name()}: el ancla {what} ({anchor!r}) aparece {seen} veces"
+                )
+        start = text.index(self.begin) + len(self.begin)
+        stop = text.index(self.end)
+        if stop < start:
+            raise AnchorError(
+                f"{self.name()}: el ancla de cierre está antes que la de apertura"
+            )
+        # From the newline after `begin` to the start of the line `end` is on,
+        # so the anchors themselves are never part of what gets replaced.
+        start = text.index("\n", start) + 1 if "\n" in text[start:stop] else start
+        stop = text.rindex("\n", start, stop) + 1 if "\n" in text[start:stop] else stop
+        return start, stop
+
+    def splice(self, text: str, lines: list[str]) -> str:
+        start, stop = self.body(text)
+        filled = "".join(line + "\n" for line in lines)
+        return text[:start] + filled + text[stop:]
+
+    def current(self, text: str) -> list[str]:
+        start, stop = self.body(text)
+        return [line for line in text[start:stop].splitlines()]
+
+
 @dataclass(frozen=True)
 class Destination:
     """One file the tokens are written into.
@@ -262,7 +374,7 @@ class Destination:
         return pattern is not None and pattern.search(text) is not None
 
 
-def verify(doc: dict, destinations: list[Destination],
+def verify(doc: dict, destinations: list[Destination | Block],
            groups: str | list[str] = "color") -> int:
     """Every declaration this would emit must already be in the file, verbatim.
 
@@ -275,9 +387,11 @@ def verify(doc: dict, destinations: list[Destination],
     lines = {p: _stripped(t) for p, t in texts.items()}
     missing: list[str] = []
     checked = 0
+    blocks = [d for d in destinations if isinstance(d, Block)]
+    plain = [d for d in destinations if not isinstance(d, Block)]
 
     for name, entry in tokens_of(doc, groups):
-        for dest in destinations:
+        for dest in plain:
             if not dest.carries(name, entry, texts[dest.path]):
                 continue
             decls = dest.declarations(name, entry)
@@ -316,6 +430,33 @@ def verify(doc: dict, destinations: list[Destination],
                             "las otras nunca se reescriben"
                         )
 
+    # A block is checked whole rather than declaration by declaration, and
+    # that is the point of it: the region belongs to the generator, so a line
+    # somebody ADDED by hand inside it is a mismatch too. The pattern-based
+    # half cannot ask that question — it only ever asks whether what it emits
+    # is present, so an extra neighbour sits there unnoticed for good.
+    for blk in blocks:
+        want = blk.render(doc, groups)
+        checked += len(want)
+        try:
+            have = blk.current(texts[blk.path])
+        except AnchorError as err:
+            missing.append(str(err))
+            continue
+        stripped_have = [line.strip() for line in have]
+        stripped_want = [line.strip() for line in want]
+        if stripped_have != stripped_want:
+            absent = [line for line in stripped_want if line not in stripped_have]
+            extra = [line for line in stripped_have if line not in stripped_want]
+            detail = []
+            if absent:
+                detail.append("falta: " + " / ".join(absent[:3]))
+            if extra:
+                detail.append("sobra: " + " / ".join(extra[:3]))
+            if not detail:
+                detail.append("el mismo contenido en otro orden")
+            missing.append(f"{blk.name()}  bloque — " + "; ".join(detail))
+
     if checked == 0:
         print("  nada que verificar: ningún destino declara ningún token")
         return 1
@@ -328,7 +469,7 @@ def verify(doc: dict, destinations: list[Destination],
     return 0
 
 
-def write(doc: dict, destinations: list[Destination],
+def write(doc: dict, destinations: list[Destination | Block],
           groups: str | list[str] = "color") -> int:
     """Rewrite every declaration in place, from the token document.
 
@@ -343,8 +484,11 @@ def write(doc: dict, destinations: list[Destination],
     problems: list[str] = []
     rewritten = 0
 
+    blocks = [d for d in destinations if isinstance(d, Block)]
+    plain = [d for d in destinations if not isinstance(d, Block)]
+
     for name, entry in tokens_of(doc, groups):
-        for dest in destinations:
+        for dest in plain:
             if not dest.carries(name, entry, updated[dest.path]):
                 continue
             decls = dest.declarations(name, entry)
@@ -385,6 +529,37 @@ def write(doc: dict, destinations: list[Destination],
             updated[dest.path] = new
             rewritten += count
 
+    # Blocks last, because they replace their region whole and would
+    # overwrite anything a pattern had just written inside it. Which is a
+    # failure worth naming rather than tolerating: the other destination
+    # reports the declarations it rewrote, the file does not carry them, and
+    # both halves look like they worked. So the region is compared before and
+    # after the rewrites, and disagreement stops the run.
+    for blk in blocks:
+        want = blk.render(doc, groups)
+        try:
+            before = blk.current(texts[blk.path])
+            after = blk.current(updated[blk.path])
+        except AnchorError as err:
+            problems.append(str(err))
+            continue
+        if before != after:
+            problems.append(
+                f"{blk.name()}: otro destino escribió adentro del bloque, que este "
+                "destino reemplaza entero — los dos dirían que escribieron"
+            )
+            continue
+        if not want:
+            # Splicing nothing in is a wipe that reports success: the anchors
+            # stay, the region empties, and the count of what was written is
+            # zero for a reason nobody reads.
+            problems.append(f"{blk.name()}: el bloque quedaría vacío, no se emite ningún token")
+            continue
+        updated[blk.path] = blk.splice(updated[blk.path], want)
+        # Counted whether or not the bytes changed, like the pattern half: a
+        # second run rewriting the same values is a success, not an empty one.
+        rewritten += len(want)
+
     if problems:
         print(f"  {len(problems)} destino(s) quedarían a medias, no se escribió nada:")
         for p in problems:
@@ -402,7 +577,7 @@ def write(doc: dict, destinations: list[Destination],
     return 0
 
 
-def show(doc: dict, destinations: list[Destination],
+def show(doc: dict, destinations: list[Destination | Block],
          groups: str | list[str] = "color") -> int:
     """Print what each destination should say, without touching anything."""
     for dest in destinations:
@@ -414,7 +589,7 @@ def show(doc: dict, destinations: list[Destination],
     return 0
 
 
-def main(doc: dict, destinations: list[Destination], argv: list[str] | None = None,
+def main(doc: dict, destinations: list[Destination | Block], argv: list[str] | None = None,
          groups: str | list[str] = "color") -> int:
     """`--write`, `--verify`, or print. An unknown flag is refused.
 
