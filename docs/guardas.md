@@ -91,6 +91,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   a lo que autoriza?» y el tercero preguntó «¿de dónde viene esta cadena?».
   Estar metido a fondo en una clase de error vuelve peor para ver otra, y el
   marco compartido ahí no era la premisa de una pregunta — era el tema.
+- **La respuesta equivocada con el conteo correcto es la peor de todas.** Un
+  recorredor asumía que todos los grupos anidan dos niveles. Los colores sí
+  —`color.surface.ground`— y los radios no: van directo bajo el suyo. Leído un
+  nivel de más, devolvió el diccionario `$extensions` de cada token **como si
+  fuera el token**: seis entradas para un archivo de seis radios, cinco para
+  uno de cinco. Un chequeo de longitud habría pasado, y el nombre de cada
+  entrada era `$extensions`. Por eso el recorrido busca la **marca** de un
+  token —tener `$value`— en vez de contar niveles. Y por eso el fixture ahora
+  trae las dos profundidades: el anterior tenía sólo la anidada, así que
+  reproducía el mecanismo y no la forma.
 - **Cuando dos números que deberían coincidir no coinciden, la diferencia es
   el dato, no el ruido — y tener una explicación no la cierra.** Una
   verificación contó 112 declaraciones donde la herramienta del consumidor
