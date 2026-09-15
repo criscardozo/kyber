@@ -224,9 +224,25 @@ class Destination:
     obvious implementation has to be the right one.
 
     What this does NOT catch is the other direction: a file MISSING a token it
-    should carry looks the same as a subset declining it. That is a question
-    about intent, which the file cannot answer, so it stays with the consumer's
-    own test that its theme declares what it should.
+    should carry looks the same as a subset declining it. The file cannot
+    answer a question about intent. Deriving membership closed one hole and
+    opened its mirror image — a consumer deleted a token from its watch theme
+    and verify stayed green at 151.
+
+    So `subset=True` is half of a pair, and the other half is the consumer's:
+
+      - HERE, the emitter follows the file. A token the file starts declaring
+        is adopted and its value tracks the others, so the values cannot
+        diverge. Nothing about behaviour is gated by a list.
+      - THERE, a test pins the membership, exact, and fails by NAME in both
+        directions. Which roles a partial target carries is a design decision,
+        so changing it should mean editing a list on purpose — a closed
+        population, fixed by the test that states it.
+
+    That is why this list is not the one that was wrong before: a list that
+    silently gates what a generator does is a second copy nobody couples; a
+    list that asserts a decision and names what broke is the decision written
+    down.
     """
 
     path: Path
