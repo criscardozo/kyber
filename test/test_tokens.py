@@ -10,6 +10,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "design"))
 
 from tokens import (  # noqa: E402
+    AnchorError,
+    Block,
     Destination,
     css_value,
     flat,
@@ -408,6 +410,176 @@ class VerifyAndWrite(unittest.TestCase):
         radii = Destination(both, swift_decls, swift_pattern, label="radii")
         self.assertEqual(write(DOC, [colours, radii], ["color", "radius"]), 1)
         self.assertEqual(both.read_text(encoding="utf-8"), before)
+
+
+BEGIN = "    // kyber:radius start"
+END = "    // kyber:radius end"
+
+
+def radius_lines(name, entry):
+    value = entry["$value"]
+    if not isinstance(value, str):
+        return []
+    return [f"    static let {name}: CGFloat = {value.removesuffix('px')}"]
+
+
+class Blocks(unittest.TestCase):
+    """The destination that creates what is not there.
+
+    Every one of these was written before the consumers wired it, from the
+    shape both of them described: an iOS theme with no radius constant
+    anywhere, so there is nothing for a pattern to find.
+    """
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp())
+        self.swift = self.dir / "Theme.swift"
+
+    def block(self):
+        return Block(self.swift, radius_lines, BEGIN, END, label="radios")
+
+    def file(self, body="", tail="}\n"):
+        self.swift.write_text(
+            f"enum Theme {{\n{BEGIN}\n{body}{END}\n{tail}", encoding="utf-8"
+        )
+
+    def test_it_fills_a_region_that_starts_empty(self):
+        self.file()
+        self.assertEqual(write(DOC, [self.block()], "radius"), 0)
+        out = self.swift.read_text(encoding="utf-8")
+        self.assertIn("    static let card: CGFloat = 18\n", out)
+        self.assertIn("    static let field: CGFloat = 10\n", out)
+        self.assertIn("enum Theme {", out)          # nothing outside moved
+        self.assertTrue(out.endswith("}\n"))
+        self.assertEqual(verify(DOC, [self.block()], "radius"), 0)
+
+    def test_writing_twice_produces_the_same_bytes(self):
+        # Idempotence is the first thing the catalogue asks of a generator: a
+        # diff that is not a value change trains everyone to ignore the ones
+        # that are.
+        self.file()
+        write(DOC, [self.block()], "radius")
+        once = self.swift.read_text(encoding="utf-8")
+        write(DOC, [self.block()], "radius")
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), once)
+
+    def test_a_stale_value_inside_the_block_fails_verify(self):
+        self.file(body="    static let card: CGFloat = 99\n"
+                       "    static let field: CGFloat = 10\n")
+        self.assertEqual(verify(DOC, [self.block()], "radius"), 1)
+
+    def test_a_line_added_by_hand_inside_the_block_fails_verify(self):
+        # The question the pattern half CANNOT ask. It only checks that what
+        # it emits is present, so an extra neighbour lives there for good.
+        self.file(body="    static let card: CGFloat = 18\n"
+                       "    static let field: CGFloat = 10\n"
+                       "    static let smuggled: CGFloat = 4\n")
+        self.assertEqual(verify(DOC, [self.block()], "radius"), 1)
+
+    def test_the_same_lines_in_another_order_fail_verify(self):
+        self.file(body="    static let field: CGFloat = 10\n"
+                       "    static let card: CGFloat = 18\n")
+        self.assertEqual(verify(DOC, [self.block()], "radius"), 1)
+
+    def test_a_missing_anchor_refuses_and_writes_nothing(self):
+        self.swift.write_text("enum Theme {\n}\n", encoding="utf-8")
+        before = self.swift.read_text(encoding="utf-8")
+        self.assertEqual(write(DOC, [self.block()], "radius"), 1)
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), before)
+        self.assertEqual(verify(DOC, [self.block()], "radius"), 1)
+
+    def test_a_doubled_anchor_refuses_instead_of_taking_the_first_pair(self):
+        # Picking a pair here means generated code lands in whichever region
+        # the search happened to bracket, which is not a place anyone chose.
+        self.swift.write_text(
+            f"enum A {{\n{BEGIN}\n{END}\n}}\nenum B {{\n{BEGIN}\n{END}\n}}\n",
+            encoding="utf-8",
+        )
+        before = self.swift.read_text(encoding="utf-8")
+        self.assertEqual(write(DOC, [self.block()], "radius"), 1)
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), before)
+
+    def test_an_inverted_pair_refuses_instead_of_splicing_backwards(self):
+        self.swift.write_text(f"{END}\nmiddle\n{BEGIN}\n", encoding="utf-8")
+        before = self.swift.read_text(encoding="utf-8")
+        self.assertEqual(write(DOC, [self.block()], "radius"), 1)
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), before)
+
+    def test_the_anchors_themselves_are_never_replaced(self):
+        self.file(body="    static let card: CGFloat = 99\n")
+        write(DOC, [self.block()], "radius")
+        out = self.swift.read_text(encoding="utf-8")
+        self.assertEqual(out.count(BEGIN), 1)
+        self.assertEqual(out.count(END), 1)
+
+    def test_emitting_no_token_is_a_refusal_not_a_silent_wipe(self):
+        # A block that renders nothing empties its region while the run
+        # reports what the OTHER destination wrote. Alone it is already caught
+        # by "nothing was rewritten", so the case has to be built with a
+        # second destination that does write — found by deleting the refusal
+        # and watching the first version of this test pass anyway.
+        other = self.dir / "other.css"
+        other.write_text("  --ground: #OLD;\n  --ground: #OLD;\n  --veil: a;\n"
+                         "  --veil: b;\n  --ink: a;\n  --ink: b;\n", encoding="utf-8")
+        self.file(body="    static let card: CGFloat = 18\n")
+        before = self.swift.read_text(encoding="utf-8")
+        colours = Destination(other, colour_decls, colour_pattern, label="other")
+        empty = Block(self.swift, lambda n, e: [], BEGIN, END, label="vacío")
+        self.assertEqual(write(DOC, [colours, empty], ["color", "radius"]), 1)
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), before)
+        self.assertIn("--ground: #OLD;", other.read_text(encoding="utf-8"))
+
+    def test_a_block_and_a_rewrite_destination_share_one_file(self):
+        self.swift.write_text(
+            "enum Theme {\n"
+            "  --ground: #OLD;\n  --ground: #OLD;\n"
+            "  --veil: a;\n  --veil: b;\n"
+            "  --ink: a;\n  --ink: b;\n"
+            f"{BEGIN}\n{END}\n}}\n",
+            encoding="utf-8",
+        )
+        colours = Destination(self.swift, colour_decls, colour_pattern, label="colours")
+        both = [colours, self.block()]
+        self.assertEqual(write(DOC, both, ["color", "radius"]), 0)
+        out = self.swift.read_text(encoding="utf-8")
+        self.assertIn("  --ground: #F4F4F4;", out)
+        self.assertIn("    static let card: CGFloat = 18", out)
+        self.assertEqual(verify(DOC, both, ["color", "radius"]), 0)
+
+    def test_a_rewrite_reaching_inside_the_block_stops_the_run(self):
+        # The overlap that would otherwise be invisible: the block replaces
+        # its region whole and goes last, so the pattern's edit disappears
+        # while both halves report having written it.
+        self.swift.write_text(
+            f"enum Theme {{\n{BEGIN}\n"
+            "    static let card: CGFloat = 99\n"
+            "  --ground: #OLD;\n  --ground: #OLD;\n"
+            "  --veil: a;\n  --veil: b;\n"
+            "  --ink: a;\n  --ink: b;\n"
+            f"{END}\n}}\n",
+            encoding="utf-8",
+        )
+        before = self.swift.read_text(encoding="utf-8")
+        colours = Destination(self.swift, colour_decls, colour_pattern, label="colours")
+        self.assertEqual(write(DOC, [colours, self.block()], ["color", "radius"]), 1)
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), before)
+
+    def test_a_broken_block_leaves_every_other_file_untouched(self):
+        other = self.dir / "other.css"
+        other.write_text("  --ground: #OLD;\n  --ground: #OLD;\n  --veil: a;\n"
+                         "  --veil: b;\n  --ink: a;\n  --ink: b;\n", encoding="utf-8")
+        self.swift.write_text("no anchors here\n", encoding="utf-8")
+        before = other.read_text(encoding="utf-8")
+        ok = Destination(other, colour_decls, colour_pattern, label="other")
+        self.assertEqual(write(DOC, [ok, self.block()], ["color", "radius"]), 1)
+        self.assertEqual(other.read_text(encoding="utf-8"), before)
+
+    def test_the_anchor_error_names_which_anchor_and_which_destination(self):
+        self.swift.write_text(f"{BEGIN}\n", encoding="utf-8")
+        with self.assertRaises(AnchorError) as caught:
+            self.block().body(self.swift.read_text(encoding="utf-8"))
+        self.assertIn("radios", str(caught.exception))
+        self.assertIn("cierre", str(caught.exception))
 
 
 if __name__ == "__main__":
