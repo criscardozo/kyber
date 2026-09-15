@@ -600,7 +600,11 @@ def main(doc: dict, destinations: list[Destination | Block], argv: list[str] | N
     args = sys.argv[1:] if argv is None else argv
     known = {"--write", "--verify", "--help", "-h"}
     unknown = [a for a in args if a not in known]
-    usage = "uso: emit.py [--verify | --write]"
+    # Every flag `known` accepts is named here, and a test couples the two:
+    # the list decides what is REFUSED, so a flag missing from the message is
+    # one nobody can discover, and a flag in the message that is not accepted
+    # sends someone to a wrong command. It listed two of four.
+    usage = "uso: emit.py [--verify | --write | --help]"
     if unknown:
         print(f"no entiendo {' '.join(unknown)}.\n{usage}", file=sys.stderr)
         return 1
