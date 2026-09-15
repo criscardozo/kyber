@@ -121,6 +121,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   suyo. Tenía la regla adelante y puso la excepción. **Si la forma correcta no
   es la más cómoda, la prosa pierde**: lo que lo arregla es que la API la
   ofrezca —una bandera, un helper— no una advertencia mejor redactada.
+
+  Y el default que gana no es sólo el más fácil de tipear: **es el que ya
+  está.** En ese caso la prosa estaba en el docstring del objeto que se estaba
+  instanciando, tres líneas arriba del código escrito. No fue que no se leyera
+  — la lista era lo que ya venía del emisor anterior, y la continuidad pesó más
+  que el documento. Contra eso una advertencia no puede nada; hay que sacarle
+  el lugar a lo que ya existe.
 - **Si hay varios barridos, el conjunto de archivos se decide UNA vez.** Dos
   guardas hermanas, escritas el mismo día por la misma persona y en el mismo
   directorio, discreparon: una usaba `git ls-files` a secas y la otra
@@ -326,6 +333,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   lo re-ejecutaba, con conteos viejos y peldaños nuevos que ya cruzaban el
   mínimo. Un generador que nadie corre volvió a ser un espejo, que es lo que
   se quería dejar de tener.
+- **Una lista que afirma una decisión sirve; una que gatea comportamiento en
+  silencio, no.** Las dos se escriben igual y por eso se confunden. La que
+  gateaba qué tokens gestionaba un generador era una segunda copia que nadie
+  acoplaba: divergía del archivo y el generador se callaba. La que declara qué
+  roles lleva un target parcial es una **decisión escrita**, población cerrada
+  por el test que la enuncia, y falla **por nombre** en las dos direcciones. Al
+  ver una lista a mano, la pregunta no es si sacarla sino cuál de las dos es:
+  si cambia lo que el programa hace, deriva; si afirma lo que alguien decidió,
+  se queda y se prueba en los dos sentidos.
 - **Comparar todo lo que hay no es comparar que esté todo.** Una lista escrita a
   mano sólo prueba que lo que nombra coincide. La lista se contrasta contra el
   árbol (los archivos, las colecciones raíz) y la guarda **nombra lo que
