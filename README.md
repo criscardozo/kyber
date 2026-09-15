@@ -18,6 +18,7 @@ gets in, and between them they explain every choice below: it has to be
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
 | 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
+| 🎨 Tokens | `design/tokens.py` — the machinery both token emitters were writing twice: the walk, the value spelling, the in-place rewrite, and verify/write. Each consumer keeps its own palette and its own declaration spelling |
 | 💎 Mark | `icon.svg` — the crystal, hand-drawn. `icon.png` renders it; `banner.png` is built from it by `design/build-banner.mjs` |
 
 ## What it does
@@ -307,7 +308,22 @@ out not to qualify for reasons nobody had guessed:
 - **The theme module passes the filter and is still not worth it**, which is
   what put the second clause of the filter into words. It goes in when
   something bigger goes with it.
-- **The design-token emitter does not, and not because one side lacks it.**
+- **The design-token emitter's machinery is in**, now that both consumers
+  generate. Measured before extracting, the way the banner generator was:
+  unlike that one, these two shared 45 identical lines and the same function
+  shapes. What came in is `design/tokens.py` — walking the document, spelling
+  a value, rewriting a declaration where it already sits, and the verify and
+  write pair with its reporting. What stayed out is how each destination
+  SPELLS a declaration: one wraps a Swift line past a measured column, the
+  other does not; one omits a dark CSS line that repeats the light one, the
+  other writes both because every token appears three times in its
+  stylesheet. Those are not one file with different constants.
+  Verified against both consumers' real files read-only before anything was
+  committed: 112 declarations in one and 61 in the other, character for
+  character — and the 61 is the same number that consumer's own emitter
+  reports, which is the cross-check that the shared version is equivalent
+  rather than merely green.
+- **Requirements that were gathered before it existed, now satisfied.**
   Requirements gathered while a consumer prepares its side, so they are not
   rediscovered later: a consumer can have a target that needs the tokens and
   **cannot link the generated file** — a watch app, with its own parser forced
