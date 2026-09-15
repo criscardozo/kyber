@@ -548,3 +548,12 @@ midiendo, en las dos apps, y por eso viajan juntas.
   como regla y era una hipótesis, y lo que excluyó era justamente el chequeo
   más valioso. Antes de que un «es caro» o «tarda demasiado» decida un diseño,
   cronometrarlo una vez.
+
+  Y el costo mal estimado suele ser el de la alternativa **buena**, no el de
+  la mala, porque se paga de entrada mientras el otro se paga de a poco.
+  Medido en la escala más chica que existe: reacomodar un párrafo a mano se
+  siente más barato que escribir las cuatro líneas que lo reacomodan solas, y
+  lo es —para la primera edición—. La tercera pasada a mano ya costó más que
+  la herramienta, y para entonces están pagadas las tres. La señal accionable
+  no es la tercera, es la segunda: al ir a editar a mano lo mismo por segunda
+  vez, ahí se escribe la herramienta.
