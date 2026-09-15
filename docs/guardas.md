@@ -26,14 +26,14 @@ midiendo, en las dos apps, y por eso viajan juntas.
   dar `false` no informa nada.
 - **No la escribas, corrila — y antes de mirar, decí qué significaría cada
   color.** La regla del control positivo se aplica pensando, y pensando falla:
-  en un proyecto se escribieron **tres** sondas inertes en una semana y las
-  tres parecieron obviamente discriminantes en el momento; a las tres las
-  agarró correr la mutación, a ninguna el razonamiento. Y escribir la predicción **antes** cubre
-  el error simétrico, que salió en el otro proyecto: esperar rojo, ver verde, y
-  acomodar la interpretación hasta «arreglar» algo que ya estaba bien, cuando
-  verde era la respuesta correcta. Decir de antemano qué significaría cada
-  color convierte la corrida en una medición; mirarla y después decidir qué
-  significó, no.
+  en un proyecto se escribieron **tres** sondas inertes en una semana y las tres
+  parecieron obviamente discriminantes en el momento; a las tres las agarró
+  correr la mutación, a ninguna el razonamiento. Y escribir la predicción
+  **antes** cubre el error simétrico, que salió en el otro proyecto: esperar
+  rojo, ver verde, y acomodar la interpretación hasta «arreglar» algo que ya
+  estaba bien, cuando verde era la respuesta correcta. Decir de antemano qué
+  significaría cada color convierte la corrida en una medición; mirarla y
+  después decidir qué significó, no.
 - **Si el observable es idéntico en el caso sano y en el roto, no es el
   observable.** Medido subseteando una tipografía de íconos: la guarda que
   sostenía la lista pasó en verde con la pantalla visiblemente rota, porque un
