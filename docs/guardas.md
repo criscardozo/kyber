@@ -249,7 +249,12 @@ midiendo, en las dos apps, y por eso viajan juntas.
   por el test que la enuncia, y falla **por nombre** en las dos direcciones. Al
   ver una lista a mano, la pregunta no es si sacarla sino cuál de las dos es:
   si cambia lo que el programa hace, deriva; si afirma lo que alguien decidió,
-  se queda y se prueba en los dos sentidos.
+  se queda y se prueba en los dos sentidos. El chequeo de sintaxis de este repo
+  era del primer tipo sin que nadie lo notara: cuatro directorios escritos a
+  mano, y `firebase/` no estaba entre ellos, así que un `.mjs` trackeado nunca
+  se parseó — la orden vieja termina en verde sobre una copia rota a propósito
+  de ese archivo. Una lista que gatea comportamiento no avisa cuando le falta
+  algo; avisa cuando lo que le falta se rompe, que es tarde.
 - **La falla que no cambia el color de nada es la que hay que ir a buscar.** El
   caso: un submódulo privado que el deploy no podía clonar salía como una línea
   de `Warning:` y el build seguía — verde, sin el submódulo. Ninguna guarda de
