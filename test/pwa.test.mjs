@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { KyberError } from "../scripts/lib/errors.mjs";
-import { precacheVerdict, pwaProblems, requirePwa } from "../scripts/lib/pwa.mjs";
+import { REQUIRED, precacheVerdict, pwaProblems, requirePwa } from "../scripts/lib/pwa.mjs";
 
 const PWA = {
   port: 3100,
@@ -25,9 +25,15 @@ test("a complete pwa block has no problems", () => {
 
 test("a missing block, and every missing key, is named", () => {
   assert.deepEqual(pwaProblems(undefined), ['".kyber/config.json" has no "pwa" block']);
+  // Derived from REQUIRED, not a second copy of it. The list used to be typed
+  // out here and coupled only by a count, which answers "how many" to a
+  // question that was "which ones": add a required key and the failure reads
+  // "expected 6 to equal 5" instead of naming it.
+  const expected = REQUIRED.filter((k) => k !== "port");
+  assert.ok(expected.length > 3, `only ${expected.length} keys to check`);
   const problems = pwaProblems({ port: 3100 });
-  assert.equal(problems.length, 5);
-  for (const key of ["entry", "precachedRoutes", "minStaticAssets", "offlineText", "deepRoute"]) {
+  assert.equal(problems.length, expected.length);
+  for (const key of expected) {
     assert.ok(problems.some((p) => p.includes(`"pwa.${key}"`)), `${key} not named`);
   }
 });
