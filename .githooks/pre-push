@@ -23,9 +23,13 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
+# Through `npm run check`, not by repeating its file list. The list lived in
+# both places and nothing coupled them: add a directory and you have to
+# remember two, which is the duplication this whole repo exists to remove,
+# sitting in its own guard. Found when a consumer noticed two of ITS sweeps
+# had drifted apart the same way.
 echo "pre-push: syntax"
-for f in scripts/*.mjs scripts/lib/*.mjs test/*.mjs design/*.mjs; do node --check "$f"; done
-python3 -m compileall -q design test
+npm run -s check
 
 echo "pre-push: tests"
 node --test > /dev/null

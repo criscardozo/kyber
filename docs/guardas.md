@@ -111,6 +111,24 @@ midiendo, en las dos apps, y por eso viajan juntas.
   mitades, porque una exclusión probada de un solo lado no distingue «lo
   ignoró» de «no escaneó nada»: un archivo plantado bajo una ruta ignorada
   tiene que quedar afuera **y** uno plantado sin stagear tiene que contarse.
+- **Si hay varios barridos, el conjunto de archivos se decide UNA vez.** Dos
+  guardas hermanas, escritas el mismo día por la misma persona y en el mismo
+  directorio, discreparon: una usaba `git ls-files` a secas y la otra
+  `-co --exclude-standard`, con el comentario explicando por qué. **Nada lo
+  hacía visible** — no hay diff entre dos archivos que nadie compara, y las dos
+  estaban verdes. Es el problema de las N copias que nadie acopla, aplicado a
+  la decisión más silenciosa que toma una guarda. Una función que devuelve el
+  conjunto, y todas la llaman. Pasó igual acá: la lista de archivos del chequeo
+  de sintaxis estaba duplicada entre el `package.json` y el hook, así que
+  agregar un directorio obligaba a acordarse de dos lugares.
+- **Un delimitador de comentario no puede aparecer dentro de su propio
+  comentario.** Escribir la prosa que explica la regla al lado de la regla es
+  lo correcto, y además es una fuente de fallos por derecho propio: un glob de
+  directorios de build terminado en `*` seguido de `/`, escrito adentro de un
+  bloque `/* */`, lo cierra antes de tiempo y el resto del archivo parsea como
+  código. Tercera vez en un día que un delimitador de comentario muerde, cada
+  una por un mecanismo distinto. Cuando el texto tiene que nombrar el
+  delimitador, va en comentarios de línea o con el token partido.
 - **Al cambiar una sonda, la prueba de que cambiaste la sonda y no la medición
   es que los números no se muevan.** Cambiar cómo se barre y ver otro total
   deja sin saber cuál de las dos cosas pasó. Si el conjunto viejo y el nuevo
