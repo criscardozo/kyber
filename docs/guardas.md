@@ -24,6 +24,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   íconos dibujados como palabras. La API contesta por la declaración
   `@font-face`, no por los bytes que llegaron; un `true` que no tiene forma de
   dar `false` no informa nada.
+- **No la escribas, corrila — y antes de mirar, decí qué significaría cada
+  color.** La de arriba se aplica pensando, y pensando falla: en un proyecto se
+  escribieron **tres** sondas inertes en una semana y las tres parecieron
+  obviamente discriminantes en el momento; a las tres las agarró correr la
+  mutación, a ninguna el razonamiento. Y escribir la predicción **antes** cubre
+  el error simétrico, que salió en el otro proyecto: esperar rojo, ver verde, y
+  acomodar la interpretación hasta «arreglar» algo que ya estaba bien, cuando
+  verde era la respuesta correcta. Decir de antemano qué significaría cada
+  color convierte la corrida en una medición; mirarla y después decidir qué
+  significó, no.
 - **Si el observable es idéntico en el caso sano y en el roto, no es el
   observable.** Medido subseteando una tipografía de íconos: la guarda que
   sostenía la lista pasó en verde con la pantalla visiblemente rota, porque un
@@ -104,6 +114,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   resolver el valor real a través de la plataforma — no volver a llamar al
   parser para producir lo esperado. Es la versión concreta de que una medición
   que no puede dar el resultado contrario no es una medición.
+- **La señal de que una conclusión merece revisarse es que no deja trabajo
+  siguiente.** Una medición que prueba algo deja algo atrás: un test que
+  mantener, un número que va a envejecer, una guarda que alguien va a tener que
+  tocar. Una que concluye «esto no se puede probar» no deja nada, y por eso
+  nadie la vuelve a mirar — se archiva sola. No dice que la conclusión sea
+  falsa; dice que es la que menos chances tiene de corregirse si lo es. Salió
+  de retractar una propia, que es el único momento en que se nota.
 - **Elegir un fixture es afirmar cuál es la dimensión que importa, y ésa es una
   afirmación aparte.** «Un fixture CommonJS reproduce esto, uno ESM no» tiene
   dos mitades: que el bug depende del sistema de módulos, y que **no depende de
@@ -228,6 +245,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   N+1 que nadie acopla. Y se somete a su propia regla, sin lista de
   exclusiones: el que escribe la advertencia es el primero que quiere la
   excepción.
+- **Hay una clase de error que sólo se comete estando concentrado en no
+  cometerlo, y por eso no cede a más atención.** El acto de escribir la aguja
+  la crea. Un test que verificaba que cierta guarda no hubiera dejado de buscar
+  una construcción la buscaba como literal — y esa misma línea ponía la
+  construcción en el archivo, así que la búsqueda **se encontraba a sí misma y
+  no podía fallar nunca**. La primera versión del pre-push de este repo es la
+  otra mitad, y es mejor demostración porque **falló** en vez de quedarse
+  verde: para grepear que el árbol no nombra a ningún consumidor tenía que
+  contener sus nombres, y rechazó el commit que lo instalaba, en su primera
+  corrida. Lo mismo con el comentario que deletrea lo prohibido para advertir
+  sobre ello. Contra esto la atención no sirve. Sirve que la regla termine en
+  un paso ejecutable, que es por qué todas éstas terminan en uno.
 - **Una guarda que reclama más de lo que hace es peor que ninguna.** Al
   instalar una, decir **qué de lo que ya pasó habría atrapado**, contado. De
   tres fallos reales, un hook habría parado uno: los otros dos fueron un job
@@ -359,6 +388,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   una lista, verificar también lo que el título afirma sobre ella: apareció un
   ítem que no había caducado, **había nacido falso**, y nadie lo había escrito
   como afirmación en ningún lado — lo afirmaba el encabezado por él.
+- **Las copias que no son código son las que se olvidan.** Al unificar un
+  valor repetido, el inventario se arma empezando por lo que no es código,
+  porque es justo lo que ningún método encuentra: un refactor no las toca, y un
+  grep del nombre de la variable no las ve, porque ahí el valor está escrito
+  como texto suelto. Medido en dos proyectos haciendo el mismo movimiento: de
+  nueve copias, las dos que fallaron fueron las dos que no eran código —un paso
+  de CI que espera ese valor y una cabecera de seguridad, las dos leyéndolo de
+  un archivo de config como string— y del otro lado falló igual. Un encabezado
+  que enuncia una regla que vive en otro archivo es una de éstas.
 - **Un título también es una copia.** Un encabezado que describe el contenido
   de otro archivo lo duplica igual que un párrafo, y es peor de encontrar
   porque no parece prosa: quien busca copias lee cuerpos. Pasó con una sección
