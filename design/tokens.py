@@ -94,6 +94,18 @@ def flat(doc: dict, group: str = "color") -> list[tuple[str, dict]]:
     return out
 
 
+def tokens_of(doc: dict, groups: str | list[str]) -> list[tuple[str, dict]]:
+    """Every token across one group or several, in document order.
+
+    Colours and radii land in the same stylesheet, so a destination usually
+    wants both in one pass — one report, one exit code. Passing them
+    separately would verify twice and leave the caller to combine two answers,
+    which is how one of them ends up unread.
+    """
+    names = [groups] if isinstance(groups, str) else list(groups)
+    return [pair for g in names for pair in flat(doc, g)]
+
+
 def css_value(value) -> str:
     """A token's CSS spelling: a hex, or `rgba()` when it carries opacity.
 
@@ -211,7 +223,8 @@ class Destination:
         return self.label or Path(self.path).name
 
 
-def verify(doc: dict, destinations: list[Destination], group: str = "color") -> int:
+def verify(doc: dict, destinations: list[Destination],
+           groups: str | list[str] = "color") -> int:
     """Every declaration this would emit must already be in the file, verbatim.
 
     Reports what is missing and how much was checked. The second number is not
@@ -224,7 +237,7 @@ def verify(doc: dict, destinations: list[Destination], group: str = "color") -> 
     missing: list[str] = []
     checked = 0
 
-    for name, entry in flat(doc, group):
+    for name, entry in tokens_of(doc, groups):
         for dest in destinations:
             decls = dest.declarations(name, entry)
             checked += len(decls)
@@ -274,7 +287,8 @@ def verify(doc: dict, destinations: list[Destination], group: str = "color") -> 
     return 0
 
 
-def write(doc: dict, destinations: list[Destination], group: str = "color") -> int:
+def write(doc: dict, destinations: list[Destination],
+          groups: str | list[str] = "color") -> int:
     """Rewrite every declaration in place, from the token document.
 
     Refuses to write anything if any destination would lose a declaration it
@@ -288,7 +302,7 @@ def write(doc: dict, destinations: list[Destination], group: str = "color") -> i
     problems: list[str] = []
     rewritten = 0
 
-    for name, entry in flat(doc, group):
+    for name, entry in tokens_of(doc, groups):
         for dest in destinations:
             decls = dest.declarations(name, entry)
             if not decls:
@@ -345,11 +359,12 @@ def write(doc: dict, destinations: list[Destination], group: str = "color") -> i
     return 0
 
 
-def show(doc: dict, destinations: list[Destination], group: str = "color") -> int:
+def show(doc: dict, destinations: list[Destination],
+         groups: str | list[str] = "color") -> int:
     """Print what each destination should say, without touching anything."""
     for dest in destinations:
         print(f"// {dest.name()}")
-        for name, entry in flat(doc, group):
+        for name, entry in tokens_of(doc, groups):
             for decl in dest.declarations(name, entry):
                 print(decl)
         print()
@@ -357,7 +372,7 @@ def show(doc: dict, destinations: list[Destination], group: str = "color") -> in
 
 
 def main(doc: dict, destinations: list[Destination], argv: list[str] | None = None,
-         group: str = "color") -> int:
+         groups: str | list[str] = "color") -> int:
     """`--write`, `--verify`, or print. An unknown flag is refused.
 
     Refused rather than ignored, for the reason an install script learned the
@@ -375,7 +390,7 @@ def main(doc: dict, destinations: list[Destination], argv: list[str] | None = No
         print(usage)
         return 0
     if "--write" in args:
-        return write(doc, destinations, group)
+        return write(doc, destinations, groups)
     if "--verify" in args:
-        return verify(doc, destinations, group)
-    return show(doc, destinations, group)
+        return verify(doc, destinations, groups)
+    return show(doc, destinations, groups)

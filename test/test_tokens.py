@@ -14,6 +14,7 @@ from tokens import (  # noqa: E402
     css_value,
     flat,
     rewrite_declarations,
+    tokens_of,
     verify,
     write,
 )
@@ -89,6 +90,17 @@ class Walk(unittest.TestCase):
     def test_flat_reads_both_depths_from_one_document(self):
         self.assertEqual(len(flat(DOC, "color")), 3)
         self.assertEqual(len(flat(DOC, "radius")), 2)
+
+    def test_tokens_of_spans_several_groups_in_document_order(self):
+        # Colours and radii land in the same stylesheet, so a destination
+        # wants both in one pass: one report, one exit code.
+        self.assertEqual(
+            [n for n, _ in tokens_of(DOC, ["color", "radius"])],
+            ["ground", "veil", "ink", "card", "field"],
+        )
+
+    def test_tokens_of_takes_a_bare_group_name_too(self):
+        self.assertEqual(tokens_of(DOC, "radius"), flat(DOC, "radius"))
 
     def test_an_absent_group_is_empty_not_an_error(self):
         self.assertEqual(flat(DOC, "spacing"), [])
