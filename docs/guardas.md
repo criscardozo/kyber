@@ -263,20 +263,34 @@ midiendo, en las dos apps, y por eso viajan juntas.
   archivos, colecciones, líneas que matchean.
 
   Y la vuelta, para no sobrecorregir, porque convertir todo conteo en piso
-  debilita las guardas que sí deben ser exactas: **el conteo exacto es correcto
-  cuando la población la fija el propio test.** Sobre un fixture, «exactamente
-  un problema» es lo que atrapa el problema de más que la mutación no pedía, y
-  un piso lo dejaría pasar. Sobre una población que viene de afuera y puede
-  crecer con razón —los tokens de un archivo, los archivos de un árbol— el
-  exacto falla el día que alguien agrega uno **bien**, con un mensaje que no
-  nombra nada y que pide subir el número a mano: la lista mantenida a mano
-  entrando por otra puerta. Ahí va piso, más la afirmación por nombre.
+  debilita las guardas que sí deben ser exactas. **La pregunta no es dónde está
+  escrita la población, es si el conjunto es CERRADO por construcción.** La
+  primera versión de esta regla decía «exacto cuando la población la fija el
+  test», y un consumidor encontró enseguida el caso que la rompe: un array
+  tipeado adentro del test que enumera todos los sitios del repo que defaultean
+  un puerto. Está escrito ahí y aun así es abierto — crece cuando crece la app.
+  Tres formas, y cada caso elige por el conjunto y no por el archivo:
 
-  Y como toda regla de dos ramas, **una instancia correcta de la rama menos
-  común se lee como un descuido**: el exacto que quedó exacto a propósito
-  parece el que faltó cambiar, y la próxima pasada de consistencia lo convierte
-  en piso y debilita la guarda. Así que dice al lado en qué rama está y por
-  qué. Una regla con dos ramas necesita que cada caso declare la suya.
+  - **Cerrado por construcción** —un fixture literal, un producto cartesiano de
+    tres nombres por dos fondos— va **exacto**. «Exactamente un problema» es lo
+    que atrapa el problema de más que la mutación no pedía, y un piso lo
+    dejaría pasar.
+  - **Abierto pero con la pertenencia legible** va **derivando las dos puntas**
+    del mismo origen. Sigue siendo exacto y se ajusta solo; no hay número que
+    nadie tenga que subir.
+  - **Abierto y no derivable en ese punto** va **piso**, y entonces la
+    completitud tiene que estar guardada **en otro lado** — un barrido del árbol
+    que falle si aparece un sitio que la lista no nombra. Sin ese segundo
+    guardián el piso no está cuidando gran cosa.
+
+  Aparte de las tres: un piso cuyo trabajo es el **anti-vacío** —«¿el barrido
+  encontró algo?»— no es una afirmación sobre la población y corresponde
+  siempre, en cualquiera de las tres formas.
+
+  Y como toda regla ramificada, **una instancia correcta de la rama menos común
+  se lee como un descuido**: el exacto que quedó exacto a propósito parece el
+  que faltó cambiar, y la próxima pasada de consistencia lo convierte en piso y
+  debilita la guarda. Así que dice al lado en qué rama está y por qué.
 - **Medir el proxy no es medir la cosa.** La familia entera de errores de un
   día: comparar archivos por **nombre** en vez de por lo que exportan, juzgar si
   dos funciones son iguales por su **cantidad de caracteres**, leer un diff
