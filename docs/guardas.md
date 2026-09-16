@@ -352,6 +352,14 @@ midiendo, en las dos apps, y por eso viajan juntas.
   corrida. Lo mismo con el comentario que deletrea lo prohibido para advertir
   sobre ello. Contra esto la atención no sirve. Sirve que la regla termine en
   un paso ejecutable, que es por qué todas éstas terminan en uno.
+
+  Esa última línea estuvo afirmada hasta que apareció su medición, y la
+  medición es un plazo: alguien arregló una frase que un `grep` no encontraba
+  **y explicó el arreglo escribiendo el patrón como literal al lado**, con lo
+  cual el grep pasó a dar dos — la afirmación y la advertencia sobre la
+  afirmación, que manda al lector a la línea equivocada. Treinta segundos
+  entre la advertencia y su violación, en el mismo archivo, por la misma
+  persona. No lo atrapó releer el texto; lo atrapó **correr el grep**.
 - **Una guarda que sólo se dispara en el estado que existe para evitar no se
   puede verificar corriéndola.** Toda corrida sana la deja inerte, y todas van
   a ser sanas hasta la que ya es tarde, así que «se verifica cuando corra» es
