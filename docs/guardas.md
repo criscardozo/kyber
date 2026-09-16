@@ -283,6 +283,17 @@ midiendo, en las dos apps, y por eso viajan juntas.
   se lee como un descuido**: el exacto que quedó exacto a propósito parece el
   que faltó cambiar, y la próxima pasada de consistencia lo convierte en piso y
   debilita la guarda. Así que dice al lado en qué rama está y por qué.
+- **Un total sobre una población más grande que la pregunta no sobra: degrada
+  la respuesta.** Obliga a muestrear donde se podía enumerar. Al revisar si una
+  clave privada se había filtrado en los logs de CI, la población se fijó como
+  «las corridas anteriores al commit que la sacó»: 252, demasiadas para
+  bajarlas todas, así que se muestrearon 12 y el resultado quedó como muestra.
+  La población real era «las corridas que pudieron tener la clave», y eso lo
+  contesta el commit que la **introdujo**, no el que la sacó — la ventana eran
+  **cinco horas y media** y adentro había **dos** corridas. Bajadas las dos, la
+  respuesta pasó de parcial a completa sin trabajo extra. La pregunta no era
+  cuántas corridas hay, era cuáles pudieron estar afectadas; acotar por los dos
+  extremos y no por uno es lo que convierte un muestreo en una enumeración.
 - **Un conteo absorbe el error sin verse mal.** Tercera vez que un comentario
   se cuela en un parseo, y la primera que no falla ruidosamente: las anteriores
   devolvieron un bloque equivocado y una guarda marcándose a sí misma; ésta
