@@ -577,6 +577,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   vez y que el resto apunte**, o aceptar de entrada que el barrido va a ser por
   varias redacciones y enumerarlas a propósito.
 
+  Y el remedio se muerde la cola, que es la parte que hay que saber antes de
+  confiar en él: **el barrido que busca paráfrasis es derrotado por una
+  paráfrasis, y el que lo corre no tiene cómo enterarse.** Medido aplicando
+  esta misma entrada: el barrido devolvió cuatro, se unificaron los cuatro, y
+  una segunda pasada —corrida sólo porque el tema del barrido era justamente
+  que los barridos fallan— encontró una **quinta** con `×` en vez de `x` y otra
+  construcción. Cuatro parecía completo y no había nada en el resultado que
+  dijera lo contrario. Así que el paso no es «grepear mejor» sino **barrer dos
+  veces con patrones construidos distinto**, y si la segunda encuentra algo,
+  asumir que hay una tercera. Ahí no llegó: la tercera pasada no se corrió, así
+  que si alcanza con dos es lo único de esto que sigue sin medirse.
+
   Cuando el hecho **va a cambiar** —una condición que caduca— hay una salida
   mejor que dejarlas «listas para editar el día que pase»: escribirlas
   **verdaderas en los dos estados**, con la condición puesta sobre el hecho y
