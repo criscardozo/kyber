@@ -85,9 +85,20 @@ guarde una miniatura — y el síntoma es un 404 en una consola ajena, que nadie
 va a mirar.
 
 Sale del **mismo dibujo** que los demás íconos, por la razón de la sección de
-arriba: un `.ico` hecho aparte es otra copia de la marca. Regenerar todo de una
-vez lo demuestra — si los demás no cambian, el único byte nuevo es el del
-`.ico`.
+arriba: un `.ico` hecho aparte es otra copia de la marca.
+
+Y se empaqueta desde los PNG **commiteados**, no desde los que acaba de escribir
+el rasterizador, porque eso es lo que lo hace reproducible desde lo que el repo
+tiene: empaquetar dos veces da el mismo md5.
+
+La tentación es comprobarlo regenerando todo y mirando que no cambie nada más.
+No sirve, medido: en un proyecto los doce PNG salieron **modificados** y no
+había cambiado el dibujo — cero píxeles distintos en los doce, mismo tamaño,
+mismo colorspace, depth y alpha. Es no-determinismo del codificador. En el otro
+proyecto el mismo chequeo dio limpio, así que depende del encoder instalado o
+de cuándo se commitearon esos bytes. **Lo que desambigua es comparar píxeles,
+no bytes** (`compare -metric AE` o equivalente); un diff de git ahí es un falso
+positivo ruidoso que invita a commitear doce archivos idénticos.
 
 Las tres que se aprendieron rompiéndolas:
 
