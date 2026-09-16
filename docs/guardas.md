@@ -18,7 +18,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
 - **Una medición que no puede dar el resultado contrario no es una medición.**
   Antes de confiar en un comparador que dice OK, hacerlo fallar a propósito (un
   control positivo). Escribir la guarda **antes** de arreglar lo que va a
-  guardar da ese control gratis: la primera corrida falla sola. Medido en una
+  guardar da ese control gratis: la primera corrida falla sola.
+
+  Y tiene un límite que conviene saber antes de apoyarse en él: **un control
+  positivo prueba que la sonda puede dar el resultado contrario; no prueba que
+  esté variando lo que uno cree.** Son dos garantías distintas y pasar la
+  primera se siente como pasar las dos. Medido: para decidir si un escáner
+  ignoraba cierto tipo de archivo, el fixture puso **la misma clave** en los
+  dos archivos — con lo cual «lo saltea» y «lo deduplica» producen la misma
+  salida, y la conclusión salió al revés. El control era válido como control y
+  medía la variable equivocada. Se separa variando **una cosa por vez** y con
+  valores distintos en cada rama, para que las dos explicaciones no puedan
+  colapsar en el mismo observable. Medido en una
   app: `document.fonts.check('19px "Material Symbols Rounded"')` devolvió
   **`true` con la request de la fuente abortada a nivel de ruta** y todos los
   íconos dibujados como palabras. La API contesta por la declaración
@@ -78,6 +89,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   coinciden hoy, el cambio es un no-op sobre los datos y sólo movió el método
   — que es exactamente lo que se quería. Si no coinciden, hay que poder
   nombrar cada archivo de la diferencia antes de aceptar el número nuevo.
+- **Un escaneo por patrones nombrados no falla por no conocer el patrón: falla
+  por el contexto en el que el patrón está escrito.** Medido caracterizando un
+  escáner de secretos con 17 delimitadores: la misma clave, bien formada, se
+  reporta si la sigue `"`, `'`, `` ` ``, espacio, newline, `;` o el fin del
+  archivo, y es **invisible** si la sigue `<`, `>`, `,`, `)`, `}`, `]`, `&`,
+  `#`, `|` o `/`. El regex conocía el patrón perfectamente; lo que no
+  contemplaba era el carácter de al lado. Se descubrió porque **dos repos
+  hermanos dieron resultados distintos con la misma herramienta y la misma
+  clase de secreto**: en uno la clave vive en un tag XML —la sigue `<`— y en el
+  otro en una asignación con comillas. La peor forma de esto no es la del XML:
+  es una clave embebida en una URL, `…?key=…&algo=`, invisible por el `&`, que
+  es a la vez una de las maneras más comunes de que una clave se escape. Por
+  eso un barrido por **entropía** no es un complemento opcional del de
+  patrones: no le pregunta al contexto, y ahí es donde el otro es ciego.
 - **El conjunto de archivos ES parte de la medición, y hay que elegirlo para
   la pregunta.** No hay default correcto. Antes en este archivo quedó que un
   barrido que afirma completitud sobre el repo tiene que leer también lo **no
