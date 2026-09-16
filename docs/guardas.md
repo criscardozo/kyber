@@ -615,6 +615,22 @@ midiendo, en las dos apps, y por eso viajan juntas.
   pérdida escrita, y en este repo, el grep que un hook deliberadamente no hace
   y la lista de lo que todavía no entró — las dos escritas donde alguien las va
   a leer antes de "corregirlas".
+- **Un valor citado en un mensaje o en un doc es una copia de algo que se
+  movió.** No envejece avisando: se queda ahí con la misma cara que tenía
+  cuando era cierto. Medido dos veces el mismo día. Un preámbulo decía «57
+  contra 34» cuando los números ya eran 61 y 45 — y lo correcto no fue
+  actualizarlo sino **sacarlo**, porque un total en prosa que nadie recalcula
+  se vuelve a vencer solo. Y un `tree id` pasado en un mensaje para que otra
+  sesión comparara contra él correspondía al pin **anterior** al que esa sesión
+  tenía: comparar contra ese valor habría dado distinto y mandado a investigar
+  una diferencia inexistente, o —peor— habría dado igual por casualidad y
+  confirmado algo que no era. El valor contra el que se compara **se lee del
+  artefacto ahora**; quien lo cita puede decir cómo obtenerlo, no cuánto daba.
+
+  Y cuando el objeto con el que se compara puede desaparecer, el orden es
+  parte del método: leer el árbol del pin viejo **antes** del `fetch --prune`
+  contra un remoto recreado, porque después puede no quedar nada de esa
+  generación contra qué comparar.
 - **Un título también es una copia.** Un encabezado que describe el contenido
   de otro archivo lo duplica igual que un párrafo, y es peor de encontrar
   porque no parece prosa: quien busca copias lee cuerpos. Pasó con una sección
