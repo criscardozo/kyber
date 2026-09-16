@@ -75,6 +75,42 @@ Lo que hay que tener en cuenta al escribirlo, cada una aprendida rompiéndola:
   fleco gris que en fondo blanco se ve y en oscuro no. El resplandor se
   desenfoca aparte y después se recorta contra la máscara de la tarjeta.
 
+## El sitio necesita un `/favicon.ico`, y también se genera
+
+Los navegadores están contentos con un `icon.svg` y un `apple-icon.png`. Los
+**crawlers que arman íconos de sitios** no: arrancan por `/favicon.ico` y no
+leen SVG. Un proyecto sin ese archivo aparece sin ícono en el gestor de
+contraseñas, en el historial de otro navegador, o en cualquier servicio que
+guarde una miniatura — y el síntoma es un 404 en una consola ajena, que nadie
+va a mirar.
+
+Sale del **mismo dibujo** que los demás íconos, por la razón de la sección de
+arriba: un `.ico` hecho aparte es otra copia de la marca. Regenerar todo de una
+vez lo demuestra — si los demás no cambian, el único byte nuevo es el del
+`.ico`.
+
+Las tres que se aprendieron rompiéndolas:
+
+- **El empaquetador son quince líneas, no una dependencia.** Un ICO puede
+  llevar PNG adentro, así que el contenedor es una cabecera de 6 bytes más 16
+  por entrada. Que una herramienta pesada que lo hace esté instalada en la
+  máquina de hoy es el argumento **en contra**, no a favor: el script declara
+  el rasterizador que ya necesitaba y nada más.
+- **Va donde se sirve tal cual, no donde el framework lo interpreta.** En Next,
+  un `app/favicon.ico` es un archivo de metadata: el build lo **decodifica**, y
+  su decodificador rechaza lo que no sea RGBA — un rasterizador escribe RGB de
+  8 bits para un dibujo opaco, y el build falla. Desde `public/` se sirve byte
+  a byte y nadie lo parsea.
+- **El test decodifica, no comprueba que el archivo exista.** Y contrasta cada
+  entrada del directorio contra el tamaño que el PNG **declara de sí mismo**:
+  una entrada puede decir 32×32 sobre una imagen de 16×16, y el archivo abre
+  igual, en el navegador, al tamaño equivocado. Se vio fallar con exactamente
+  ese byte cambiado.
+
+Y el límite, escrito como límite: que un servicio ajeno termine cacheando el
+ícono depende de su crawler y de su caché. Lo que se puede afirmar es que hay
+algo para encontrar; lo otro no se mide desde acá.
+
 ## El archivo de la imagen
 
 - **La `src` es una ruta relativa a un archivo commiteado en el repo. Nunca una
