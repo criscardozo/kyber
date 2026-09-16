@@ -379,6 +379,15 @@ out not to qualify for reasons nobody had guessed:
 - **The reusable backup workflow is in**, approved. It was byte-identical in
   both consumers apart from two sentences of comment.
 
+  **In, and called by one of them.** The other still runs its own inlined copy
+  and takes only `kyber/scripts/` — which means a fix to the WORKFLOW does not
+  reach it, while its gitlink sits green and current. There are two adoption
+  paths into this repo, the reusable workflow and the scripts, and a consumer
+  can be fully up to date on one and never have touched the other. Sentences
+  here describing what "both consumers" do are about how the extraction
+  QUALIFIED, not about who calls what today; check `uses:` in the consumer
+  before assuming a workflow-level change landed there.
+
   What the one-liner at the top of this file says and nobody costed: **the
   minutes are the caller's**. A `workflow_call` bills every minute against the
   repository that calls it, so the shared workflow moves the code and not the

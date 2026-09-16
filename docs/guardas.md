@@ -419,6 +419,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   nadie se acuerde. La regla llegó del catálogo de un consumidor y acá se había
   rechazado por sonar a corolario; la segunda instancia la produjo quien la
   rechazó.
+
+  Y una variante que engaña más, porque el mecanismo de propagación parece
+  cubrirlo: **una guarda puesta en una pieza compartida sólo alcanza a los
+  consumidores que la consumen por ese camino.** Una capa común con dos vías de
+  adopción —un workflow reutilizable y unos scripts— deja al consumidor que usa
+  sólo la segunda sin la guarda que se agregó en la primera, **con su puntero
+  de versión en verde**, porque está al día con todo lo que efectivamente toma.
+  El puntero no miente; contesta otra pregunta. El chequeo es mirar por dónde
+  entra cada consumidor, no en qué commit está.
 - **Verificar un estado y publicar otro no es verificar.** El caso: encontrar el
   bug parchando el árbol de trabajo, confirmar que pasa **con** el parche,
   revertirlo y publicar — con lo que lo medido y lo entregado difieren
