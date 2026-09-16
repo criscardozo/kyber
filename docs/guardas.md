@@ -146,6 +146,19 @@ midiendo, en las dos apps, y por eso viajan juntas.
   nadie la vuelve a mirar — se archiva sola. No dice que la conclusión sea
   falsa; dice que es la que menos chances tiene de corregirse si lo es. Salió
   de retractar una propia, que es el único momento en que se nota.
+- **Un control que pasa por el estado que ya existía antes del cambio no probó
+  el cambio.** Es más angosto que «hacela fallar a propósito» y más fácil de
+  cometer: el control **corre**, da verde, y el verde viene de algo que andaba
+  desde antes. Medido dos veces en el mismo día. Al agregar cuatro entradas a
+  una lista de permitidos, el control probó el dominio de producción contra uno
+  ajeno —los dos extremos— y **ninguna de las cuatro entradas nuevas**; el
+  dominio de producción ya funcionaba sin la lista, así que el «permitido»
+  medía el estado previo. Tres de las cuatro entradas estaban mal escritas y lo
+  encontró otro, midiendo. Y un test que afirmaba que emitir cero tokens es un
+  rechazo pasaba en verde con el rechazo **borrado**, porque lo atrapaba una
+  guarda anterior y no la nueva. La pregunta que lo separa: **¿este caso habría
+  pasado igual antes de mi cambio?** Si la respuesta es sí, no es el control de
+  este cambio, sea cual sea su color.
 - **Un resultado limpio a la primera no distingue «está bien» de «mi máquina no
   ejerce esa dimensión».** Las dos se ven igual desde adentro, y la segunda ni
   siquiera es visible: nadie ve la dimensión que su entorno no toca. Dos casos
