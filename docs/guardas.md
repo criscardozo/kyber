@@ -413,6 +413,17 @@ midiendo, en las dos apps, y por eso viajan juntas.
 - **Una frase escrita con seguridad sobrevive más que un bug**, porque nada la
   ejecuta. Lo que se afirma en un comentario o en un doc se mide, no se relee;
   y si no se midió, se escribe como creencia, separada de lo medido.
+
+  El modo más común no es escribir sin medir: es **medir una mitad y escribir
+  la conclusión sobre las dos**. Un comentario afirmaba que cierta cabecera no
+  afectaba el login «porque el handler es una navegación top-level, nunca un
+  iframe» — cierto del handler, falso de la ruta vecina que sí carga un iframe,
+  a una palabra de distancia en la misma oración, y sobrevivió meses rompiendo
+  el login en un navegador. Y en este repo, una línea decía que el hook
+  chequeaba «todos los scripts» mientras el comando miraba cuatro directorios.
+  Las dos se escribieron sobre algo realmente medido; lo que no se midió fue el
+  resto de la familia que la frase nombraba. Por eso la frase dice exactamente
+  qué se midió, no a qué familia pertenece.
 - **Un encabezado le presta su afirmación a todo lo que cuelga de él.** Una
   lista titulada «lo que este proyecto tomó de aquél» le atribuye esa
   procedencia a cada ítem, incluidos los que nadie tomó de ahí. Al verificar
