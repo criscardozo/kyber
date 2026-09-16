@@ -107,7 +107,12 @@ midiendo, en las dos apps, y por eso viajan juntas.
   tenía nada que ver. Invisible un día entero, por dos razones que se sumaron:
   el CI se murió la misma hora en que eso entró, y a mano la suite se corría de
   a un archivo, donde se ve bien. «Sólo lectura» dice qué no escribe en la base,
-  no qué no deja abierto. Y dos sesiones distintas ese mismo día estuvieron
+  no qué no deja abierto. Y la señal que acorta el día está en **cómo** falla:
+  el reflejo ante un rojo es mirar el test que falla, pero éste falló por
+  **espera vencida** —20,8 s contra 1,1 s corriendo solo— y no por un assert.
+  Son dos diagnósticos distintos y la suite los pinta del mismo color; el
+  tiempo dice «alguien más dejó algo prendido», el assert dice «este test».
+  Y dos sesiones distintas ese mismo día estuvieron
   pusheando verificando subconjuntos **distintos cada vez**, lo que se lee como
   haber verificado todo y no lo es: es verificar un estado y publicar otro, a
   escala de sesión.
@@ -134,6 +139,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   nadie la vuelve a mirar — se archiva sola. No dice que la conclusión sea
   falsa; dice que es la que menos chances tiene de corregirse si lo es. Salió
   de retractar una propia, que es el único momento en que se nota.
+- **Un resultado limpio a la primera no distingue «está bien» de «mi máquina no
+  ejerce esa dimensión».** Las dos se ven igual desde adentro, y la segunda ni
+  siquiera es visible: nadie ve la dimensión que su entorno no toca. Dos casos
+  en dos días, los dos con el segundo proyecto corrigiendo una práctica que el
+  primero había medido bien. Regenerar unos íconos dio idéntico en una máquina
+  y doce archivos modificados en otra, con cero píxeles de diferencia — el
+  codificador de una era determinista y el de la otra no, y desde la primera no
+  había forma de saber cuál de las dos cosas estaba viendo. Y un `curl` local
+  contra una ruta reescrita devolvía la respuesta sin la cabecera que rompía
+  producción, porque el servidor de desarrollo no aplica cabeceras de config a
+  una ruta reescrita y la plataforma sí: verde local por la razón equivocada.
+  La pregunta que lo convierte en paso: **¿qué tendría que ser distinto en otra
+  máquina para que esto no diera limpio?** Si no se puede nombrar nada, lo más
+  probable es que no se haya mirado.
 - **Elegir un fixture es afirmar cuál es la dimensión que importa, y ésa es una
   afirmación aparte.** «Un fixture CommonJS reproduce esto, uno ESM no» tiene
   dos mitades: que el bug depende del sistema de módulos, y que **no depende de
