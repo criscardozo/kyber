@@ -10,6 +10,12 @@ as a git submodule: one copy, never a synchronised one. Two rules decide what
 gets in, and between them they explain every choice below: it has to be
 **earned in two** of the apps, and it may **never carry product identity**.
 
+"Earned in two" means it went wrong twice, not that it could. A case the repo
+anticipated and that never bit is the rule already working, and it does not
+count as the second instance — those two feel alike from inside and only one
+of them is evidence. The distinction was drawn by a consumer while turning
+down a rule of its own.
+
 | | |
 |---|---|
 | 📜 Rules | `docs/` — the working rules that travel, in Spanish as written. Each consumer imports them into its `CLAUDE.md`, so these are instruction, not only prose |

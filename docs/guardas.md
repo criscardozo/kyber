@@ -683,6 +683,21 @@ midiendo, en las dos apps, y por eso viajan juntas.
   escrito como una fecha futura no. La diferencia no fue el cuidado, y eso hace
   del episodio una medición de la regla de escribirlas verdaderas en los dos
   estados, no sólo una anécdota de dos frases.
+
+  Y hay un diagnóstico más barato que releer, porque no depende de darse cuenta
+  de nada: **contar cuántas veces reescribiste el mismo párrafo.** El problema
+  es que cada reescritura **se siente como mala suerte** — un párrafo se tocó
+  tres veces en una tarde y cada vez hubo una causa externa distinta y
+  perfectamente buena (cambió la visibilidad del repo, alguien corrió el job
+  antes de tiempo, apareció un modo de falla nuevo), ninguna parecida a las
+  otras vista desde adentro. Ninguna de las tres invitaba a sospechar de cómo
+  estaba escrito el párrafo. La señal no está en ninguna de las reescrituras,
+  está en el **número**: tres causas distintas tocando el mismo texto quiere
+  decir que el texto está escrito sobre algo que se mueve. En ese caso eran
+  fechas donde tenían que ir condiciones — una fecha deja de ser cierta con que
+  avance el calendario, y nadie está leyendo el archivo el día que avanza. Es
+  «la segunda edición a mano es la señal para escribir la herramienta», con la
+  misma forma en prosa.
 - **Un valor citado en un mensaje o en un doc es una copia de algo que se
   movió.** No envejece avisando: se queda ahí con la misma cara que tenía
   cuando era cierto. Medido dos veces el mismo día. Un preámbulo decía «57
