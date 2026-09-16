@@ -485,6 +485,25 @@ midiendo, en las dos apps, y por eso viajan juntas.
   de CI que espera ese valor y una cabecera de seguridad, las dos leyéndolo de
   un archivo de config como string— y del otro lado falló igual. Un encabezado
   que enuncia una regla que vive en otro archivo es una de éstas.
+- **Una ausencia decidida y una ausencia que nadie notó se ven idénticas un mes
+  después**, y la que se lee es siempre la segunda. Es la regla de la rama poco
+  común llevada a lo que **no está**: un cron que no corrió tres jueves, una
+  excepción que quedó sin convertir, un chequeo que no existe. Quien abre ese
+  archivo más adelante no tiene de dónde sacar que fue a propósito, así que lo
+  arregla — y arreglar una decisión cuesta más que tomarla, porque además hay
+  que descubrir que existía.
+
+  Lo que la vuelve legible se escribe **adentro del archivo afectado**, no en
+  un mensaje ni en un registro aparte, y lleva cinco cosas: **qué** falta y
+  **hasta cuándo** con fechas concretas, **por qué**, **quién** lo decidió,
+  cuál era **la alternativa** que se descartó, y el **riesgo que se está
+  aceptando, nombrado** — no «hay menos cobertura» sino qué pasa exactamente si
+  el riesgo ocurre. Y al lado, el comando del reemplazo manual, porque el que
+  vaya a necesitarlo va a estar leyendo justo ese archivo. Medido en dos
+  proyectos: un respaldo semanal suspendido con sus tres fechas y su ventana de
+  pérdida escrita, y en este repo, el grep que un hook deliberadamente no hace
+  y la lista de lo que todavía no entró — las dos escritas donde alguien las va
+  a leer antes de "corregirlas".
 - **Un título también es una copia.** Un encabezado que describe el contenido
   de otro archivo lo duplica igual que un párrafo, y es peor de encontrar
   porque no parece prosa: quien busca copias lee cuerpos. Pasó con una sección
