@@ -564,6 +564,26 @@ midiendo, en las dos apps, y por eso viajan juntas.
   de CI que espera ese valor y una cabecera de seguridad, las dos leyéndolo de
   un archivo de config como string— y del otro lado falló igual. Un encabezado
   que enuncia una regla que vive en otro archivo es una de éstas.
+
+  Y hay un agravante que las vuelve casi imposibles de barrer: **una copia en
+  prosa está parafraseada, así que las copias no se reconocen entre sí.** Un
+  mismo hecho apareció cuatro veces en un repo con cuatro redacciones —«a
+  private repo bills macOS runners at 10x», «macOS runners bill at a 10x
+  minute multiplier», «iOS has no CI at all, on purpose», «2382 minutos contra
+  los 2000 que da un repo privado»— y entre dos repos hermanos la misma
+  afirmación estaba escrita de dos maneras más. Cualquier `grep` encuentra un
+  subconjunto y devuelve un número que parece completo. No hay patrón que las
+  junte, así que el remedio no es buscar mejor: es **decir el hecho una sola
+  vez y que el resto apunte**, o aceptar de entrada que el barrido va a ser por
+  varias redacciones y enumerarlas a propósito.
+
+  Cuando el hecho **va a cambiar** —una condición que caduca— hay una salida
+  mejor que dejarlas «listas para editar el día que pase»: escribirlas
+  **verdaderas en los dos estados**, con la condición puesta sobre el hecho y
+  la decisión al lado. «No hay CI de iOS, y es una decisión, no sólo una
+  factura; la factura vence el día que el repo sea público, la decisión no.»
+  Eso no depende de que alguien se acuerde en el momento exacto, que es
+  justamente el momento en el que no se acuerda.
 - **Una ausencia decidida y una ausencia que nadie notó se ven idénticas un mes
   después**, y la que se lee es siempre la segunda. Es la regla de la rama poco
   común llevada a lo que **no está**: un cron que no corrió tres jueves, una
