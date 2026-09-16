@@ -661,6 +661,28 @@ midiendo, en las dos apps, y por eso viajan juntas.
   pérdida escrita, y en este repo, el grep que un hook deliberadamente no hace
   y la lista de lo que todavía no entró — las dos escritas donde alguien las va
   a leer antes de "corregirlas".
+- **Una frase que sólo PARECE vencida es más peligrosa que una vencida de
+  verdad, porque invita a que alguien la «arregle» hasta volverla falsa.** La
+  vencida la corrige quien la lee y no pasa nada. La que parece vencida y es
+  cierta la va a tocar alguien **seguro de tener razón**, porque acaba de
+  aprender el hecho general correcto y lo está aplicando un nivel de más; el
+  daño no lo hace el descuido, lo hace el conocimiento nuevo mal alcanzado.
+  Medido el día que un cambio puso a prueba lo escrito: «este job no corre
+  hasta tal fecha porque los minutos están agotados» parece falsa apenas los
+  repos pasan a públicos —un repo público no factura runners estándar— y sigue
+  siendo cierta, porque el job no vive en el repo público sino en uno privado y
+  sus minutos salen de la misma cuota. El remedio es barato: la frase lleva
+  adentro **la refutación de la inferencia que la mataría**. No alcanza con que
+  una afirmación sea verdadera; si hay una razón obvia para creerla falsa, la
+  razón va al lado.
+
+  Y el disparador que lo encuentra también se puede escribir: **releer lo que
+  se escribió para sobrevivir a un cambio, el día del cambio.** Dos comentarios
+  escritos la misma tarde con el mismo cuidado se comportaron distinto — el que
+  tenía la condición puesta sobre el hecho resistió entero, el que estaba
+  escrito como una fecha futura no. La diferencia no fue el cuidado, y eso hace
+  del episodio una medición de la regla de escribirlas verdaderas en los dos
+  estados, no sólo una anécdota de dos frases.
 - **Un valor citado en un mensaje o en un doc es una copia de algo que se
   movió.** No envejece avisando: se queda ahí con la misma cara que tenía
   cuando era cierto. Medido dos veces el mismo día. Un preámbulo decía «57
