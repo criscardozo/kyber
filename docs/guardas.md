@@ -352,6 +352,21 @@ midiendo, en las dos apps, y por eso viajan juntas.
   corrida. Lo mismo con el comentario que deletrea lo prohibido para advertir
   sobre ello. Contra esto la atención no sirve. Sirve que la regla termine en
   un paso ejecutable, que es por qué todas éstas terminan en uno.
+- **Una guarda que sólo se dispara en el estado que existe para evitar no se
+  puede verificar corriéndola.** Toda corrida sana la deja inerte, y todas van
+  a ser sanas hasta la que ya es tarde, así que «se verifica cuando corra» es
+  la manera de no medirla nunca: no es lentitud, es imposibilidad estructural.
+  Medido con una que impide publicar un volcado de la base como artefacto si el
+  repositorio no es privado — mientras siga privado, que es justo lo que la
+  guarda protege, **pasa sin hacer nada**, y eso es indistinguible de que no
+  esté puesta. Es pariente de «una medición que no puede dar el resultado
+  contrario» con la asimetría corrida de lugar: allá la sonda no puede dar
+  rojo; acá la sonda puede perfectamente y es el **entorno** el que nunca le
+  presenta la entrada. Por eso el remedio es otro. A la primera se le arregla
+  la sonda; a ésta hay que **fabricarle la entrada**: forzar el estado
+  prohibido donde sea barato —un test, un repo de prueba, un fixture— y dejar
+  el resultado etiquetado como el control fuera de banda que es, no como una
+  corrida en verde.
 - **Una guarda que reclama más de lo que hace es peor que ninguna.** Al
   instalar una, decir **qué de lo que ya pasó habría atrapado**, contado. De
   tres fallos reales, un hook habría parado uno: los otros dos fueron un job
@@ -523,6 +538,15 @@ midiendo, en las dos apps, y por eso viajan juntas.
   una lista, verificar también lo que el título afirma sobre ella: apareció un
   ítem que no había caducado, **había nacido falso**, y nadie lo había escrito
   como afirmación en ningún lado — lo afirmaba el encabezado por él.
+
+  Una frase sola hace lo mismo, y es peor de ver porque no hay nada colgando de
+  ella. «Era byte por byte idéntico en los dos consumidores» es cierto sobre
+  cómo una extracción **calificó**, y deja lugar a una segunda afirmación que
+  nadie escribió: que los dos la **consumen**. El lector la infiere. El caso
+  vale porque quien la malinterpretó fue **quien la había escrito**, meses
+  después: no era ambigua para un tercero, era verdadera y con espacio al lado.
+  Al escribir una afirmación, la pregunta es qué se va a concluir de ella, no
+  si es cierta.
 - **Las copias que no son código son las que se olvidan.** Al unificar un
   valor repetido, el inventario se arma empezando por lo que no es código,
   porque es justo lo que ningún método encuentra: un refactor no las toca, y un
