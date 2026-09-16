@@ -98,6 +98,19 @@ midiendo, en las dos apps, y por eso viajan juntas.
   mitades, porque una exclusión probada de un solo lado no distingue «lo
   ignoró» de «no escaneó nada»: un archivo plantado bajo una ruta ignorada
   tiene que quedar afuera **y** uno plantado sin stagear tiene que contarse.
+- **Correr un subconjunto distinto cada vez no es correr la suite, y lo que se
+  pierde es exactamente lo que un subconjunto no puede ver.** Un archivo de
+  tests corrido solo mide el archivo; corrido con los demás mide también lo que
+  cada uno **deja atrás**. Medido: una guarda nueva, de sólo lectura, envenenó
+  la suite de otro archivo —cinco logins dejaban sesiones con listeners vivos—
+  y el síntoma apareció como un tiempo de espera vencido en un test que no
+  tenía nada que ver. Invisible un día entero, por dos razones que se sumaron:
+  el CI se murió la misma hora en que eso entró, y a mano la suite se corría de
+  a un archivo, donde se ve bien. «Sólo lectura» dice qué no escribe en la base,
+  no qué no deja abierto. Y dos sesiones distintas ese mismo día estuvieron
+  pusheando verificando subconjuntos **distintos cada vez**, lo que se lee como
+  haber verificado todo y no lo es: es verificar un estado y publicar otro, a
+  escala de sesión.
 - **Si hay varios barridos, el conjunto de archivos se decide UNA vez.** Dos
   guardas hermanas, escritas el mismo día por la misma persona y en el mismo
   directorio, discreparon: una usaba `git ls-files` a secas y la otra
