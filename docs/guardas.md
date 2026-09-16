@@ -126,6 +126,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   conjunto, y todas la llaman. Pasó igual acá: la lista de archivos del chequeo
   de sintaxis estaba duplicada entre el `package.json` y el hook, así que
   agregar un directorio obligaba a acordarse de dos lugares.
+  Vale igual para una **región adentro de un archivo**. Una afirmación nueva
+  sobre un archivo de configuración buscó su regla con un `indexOf` pelado y
+  cayó en la primera de dos apariciones idénticas, así que «de acá en adelante»
+  pasó a ser el archivo entero — y la prosa que explicaba la trampa satisfizo
+  la afirmación. La afirmación de al lado ya recortaba bien la región; la nueva
+  no heredó ese recorte porque lo recalculó. Si dos chequeos hablan del mismo
+  archivo, el recorte también se decide una vez y se comparte.
 - **Un test que compara dos resultados de la misma función no prueba nada.**
   Los dos lados se ponen de acuerdo con cualquier bug. El test del parseo tiene
   que traer los números **escritos como números**, calculados afuera, y
@@ -153,6 +160,13 @@ midiendo, en las dos apps, y por eso viajan juntas.
   La pregunta que lo convierte en paso: **¿qué tendría que ser distinto en otra
   máquina para que esto no diera limpio?** Si no se puede nombrar nada, lo más
   probable es que no se haya mirado.
+
+  Un caso de esto que se repite con cualquier generador: **«regeneré y no
+  cambió nada» tiene dos causas y desde afuera se leen igual** — que el
+  generador sea determinista, o que nadie hubiera tocado la fuente desde la
+  última vez que se generó. La segunda no prueba nada y es la más común, porque
+  es el estado normal de un repo. Lo que las separa es regenerar sobre una
+  fuente **modificada a propósito** y ver el cambio aparecer.
 - **Elegir un fixture es afirmar cuál es la dimensión que importa, y ésa es una
   afirmación aparte.** «Un fixture CommonJS reproduce esto, uno ESM no» tiene
   dos mitades: que el bug depende del sistema de módulos, y que **no depende de
