@@ -283,6 +283,27 @@ midiendo, en las dos apps, y por eso viajan juntas.
   se lee como un descuido**: el exacto que quedó exacto a propósito parece el
   que faltó cambiar, y la próxima pasada de consistencia lo convierte en piso y
   debilita la guarda. Así que dice al lado en qué rama está y por qué.
+- **Un bucle que procesa una lista imprime cuántos procesó contra cuántos
+  esperaba, y esa línea es la guarda.** Las dos fallas son invisibles en la
+  salida del trabajo: `while read` se come la última línea de un archivo que no
+  termina en newline, y el parche de agregarle uno con `cat archivo; echo`
+  **agrega una iteración vacía si el archivo sí terminaba en newline**. Medido
+  en dos repos el mismo día y en direcciones opuestas: en uno la línea del
+  conteo habría dicho «6 de 7» si faltaba, en el otro dijo «3 de 2» porque
+  sobraba. Ninguna de las dos se ve mirando los logs que el bucle bajó.
+
+  Y el idioma correcto —`while IFS= read -r x || [ -n "$x" ]; do … done <
+  archivo`, sin `cat`, sin subshell, sin `echo`— es el que hay que usar, pero
+  **no es el paso accionable**: los idiomas se olvidan y se copian a medias. La
+  línea del conteo funciona aunque el bucle esté mal escrito de cualquiera de
+  las dos maneras.
+
+  El parche malo, además, muestra por qué «anduvo» no es «está probado»: quien
+  lo escribió tenía **también** un `[ -z "$x" ] && continue` que absorbía la
+  iteración de más, así que el mecanismo correcto tapaba al incorrecto y el
+  incorrecto nunca se ejercitó. Viajó solo a otro repo y ahí falló. **Dos
+  mecanismos para el mismo trabajo no se refuerzan: el bueno le impide al malo
+  mostrarse.**
 - **Un total sobre una población más grande que la pregunta no sobra: degrada
   la respuesta.** Obliga a muestrear donde se podía enumerar. Al revisar si una
   clave privada se había filtrado en los logs de CI, la población se fijó como
