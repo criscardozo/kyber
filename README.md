@@ -389,7 +389,10 @@ out not to qualify for reasons nobody had guessed:
   And the cadence is what spends it, not the size of the change: a consumer
   running three jobs per push pays per push. A private repo's free allowance
   is shared across the whole account, so one consumer's busy week is the other
-  consumer's outage. That is not hypothetical — one of them ran out mid-month
+  consumer's outage. A PUBLIC repository bills nothing at all for standard
+  runners, which is the only lever here that is not a diet — but read the
+  guard in `backup.yml` before pulling it: this workflow uploads the whole
+  database as an artifact, and on a public repo anyone can download it. That is not hypothetical — one of them ran out mid-month
   and its scheduled backup simply stopped getting a runner, silently enough
   that it was found while doing something else.
 

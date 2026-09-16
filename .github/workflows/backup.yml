@@ -25,9 +25,17 @@ on:
         type: string
         default: "22"
       retention-days:
-        description: How long the artifact is kept. 90 is the ceiling on a free private repo.
+        description: How long the artifact is kept. 90 is the ceiling on the free tier.
         type: number
         default: 90
+      artifact-on-public-repo:
+        description: >
+          Upload the dump even if the caller is a PUBLIC repository. Default
+          false, and the job fails rather than uploads. A workflow artifact on
+          a public repo is downloadable by ANYONE, so this would publish the
+          whole database.
+        type: boolean
+        default: false
       artifact-prefix:
         description: Artifact name prefix; the UTC date is appended.
         type: string
@@ -84,6 +92,36 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service-account.json
         run: node kyber/scripts/check-rules-drift.mjs
+
+      # Before anything is uploaded, not after. The dump is the entire
+      # production database, and a workflow artifact on a PUBLIC repository is
+      # downloadable by anyone who can see the run — no account needed. Nothing
+      # in a repo announces that: flipping visibility is two clicks in a
+      # settings page that says nothing about the twelve dumps already sitting
+      # in Actions, and the ones uploaded afterwards look identical to the ones
+      # before.
+      #
+      # Found while costing a move to public — a public repo bills no minutes
+      # for standard runners, which makes the move attractive for exactly the
+      # accounts most likely to be storing real data here. Two sessions hit it
+      # the same hour, separately, and neither a history secret-scan nor a log
+      # review can see it: an artifact is neither a commit nor a log.
+      #
+      # Fails closed. The visibility comes from the API rather than from the
+      # event payload so that an empty answer stops the job instead of reading
+      # as "not public".
+      - name: Refuse to upload a database dump from a public repo
+        if: ${{ !inputs.artifact-on-public-repo }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          visibility=$(gh api "repos/$GITHUB_REPOSITORY" --jq .visibility)
+          if [ "$visibility" != "private" ]; then
+            echo "::error::Repository visibility is '${visibility:-unknown}', not 'private'."
+            echo "::error::This job uploads a full Firestore dump as an artifact, which anyone could download."
+            echo "::error::Send the dump somewhere else, or pass artifact-on-public-repo: true if the data is not private."
+            exit 1
+          fi
 
       - name: Stamp the artifact
         id: stamp
