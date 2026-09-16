@@ -103,6 +103,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   es a la vez una de las maneras más comunes de que una clave se escape. Por
   eso un barrido por **entropía** no es un complemento opcional del de
   patrones: no le pregunta al contexto, y ahí es donde el otro es ciego.
+- **Las categorías que un escaneo cubre no son las categorías que la
+  plataforma guarda.** Un repositorio, para las herramientas, son commits y
+  blobs; para el servicio que lo hospeda son además artefactos, logs de
+  corridas, cachés, releases, claves de despliegue y secretos. Al cambiar la
+  visibilidad se expone **todo** eso, y ni un escáner de secretos sobre la
+  historia ni un barrido por entropía sobre el object store pueden ver nada de
+  ello: **un artefacto no es un commit y un log no es un blob**. Medido en dos
+  categorías distintas y en dos proyectos: doce artefactos vivos que eran
+  volcados completos de una base de producción, y doce logs de corridas de ese
+  mismo job, que maneja credenciales de administrador. Y hay una asimetría que
+  sorprende: **borrar el workflow no borra sus logs** — siguen retenidos y
+  pasan a ser públicos igual. Antes de abrir un repositorio, la lista se hace
+  sobre lo que **la plataforma** tiene, enumerándolo desde su API, no sobre lo
+  que el árbol contiene.
 - **El conjunto de archivos ES parte de la medición, y hay que elegirlo para
   la pregunta.** No hay default correcto. Antes en este archivo quedó que un
   barrido que afirma completitud sobre el repo tiene que leer también lo **no
