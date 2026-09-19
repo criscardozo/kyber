@@ -4,7 +4,7 @@
   "node": { "value": "24", "required": true },
   "java": { "value": "21", "required": true },
   "typescript": { "value": "^5.9.3", "required": true },
-  "vitest": { "value": "^4.1.11", "required": true },
+  "vitest": { "value": "^5.0.1", "required": true },
   "firebase": { "value": "^12.19.0", "required": true },
   "firebase-tools": { "value": "^15.30.0", "required": true },
   "firebase-admin": { "value": "^14.4.0", "required": true },
