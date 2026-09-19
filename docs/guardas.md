@@ -69,6 +69,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   **truncado**, contar líneas que matchean en vez de mirar a qué target
   pertenecen. Todas dan un número correcto sobre algo que no era la pregunta, y
   todas se sienten como una medición.
+
+  Y hay una sub-forma que no es una técnica de medición sino un **atributo
+  cambiado**, que aparece cuando el número elige a **quién** o a **cuál**: se
+  ordena bien por un atributo y se decide como si se hubiera ordenado por otro.
+  Dos veces en dos días, las dos de la misma mano y las dos atrapadas por el
+  dueño del dato. «26.6.2 es la última versión publicada» — cierto — leído como
+  «estás dos majors atrás», cuando la pregunta era cuál corresponde al runtime
+  y la respuesta era la que ya estaba puesta. Y «este proyecto es el más chico
+  de los tres» — cierto — leído como «es el mejor candidato para probar el
+  compilador nuevo», cuando el proyecto no tiene una sola línea de ese
+  lenguaje. La medición es correcta y verificable, y por eso el error viaja con
+  su credencial puesta: quien lo recibe no tiene cómo verlo, sólo lo ve el que
+  conoce el dato por dentro. Cuando un número elige un destinatario, nombrar el
+  atributo que la decisión necesita y comprobar que el número sea **de ese**.
 - **Simular lo que creés que hace el código prueba tu modelo, no el código.**
   El caso: para saber si un `trap ... EXIT` se disparaba en una salida exitosa,
   se escribió un script chico que reproducía el patrón y se lo corrió. Confirmó
