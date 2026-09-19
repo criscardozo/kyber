@@ -698,6 +698,20 @@ midiendo, en las dos apps, y por eso viajan juntas.
   del episodio una medición de la regla de escribirlas verdaderas en los dos
   estados, no sólo una anécdota de dos frases.
 
+  Y la otra mitad es qué hacer **cuando sos el que la encuentra**: antes de
+  corregir una afirmación que parece vencida, **fecharla**. Una frase puede ser
+  exacta en el momento en que se escribió y leerse falsa hoy porque el árbol se
+  movió después. Medido: un documento traía como evidencia «no existe restore»
+  con el comando que lo probaba, y se reportó como una medición del directorio
+  equivocado. Las fechas dicen otra cosa — la evidencia se escribió a las 12:42
+  y el archivo que la contradice nació a las 13:18 del **mismo día**, en ese
+  mismo directorio, y se mudó a otro repo diez días después. El comando
+  apuntaba bien. Lo que lo delató fue `git log` sobre la ruta, no releer la
+  frase. El que estuvo por «arreglarla» acababa de aprender la regla del
+  conjunto de archivos y la estaba aplicando un nivel de más, que es
+  exactamente el perfil que esta entrada describe — visto desde adentro por una
+  vez, y no es el de un distraído.
+
   Y hay un diagnóstico más barato que releer, porque no depende de darse cuenta
   de nada: **contar cuántas veces reescribiste el mismo párrafo.** El problema
   es que cada reescritura **se siente como mala suerte** — un párrafo se tocó
