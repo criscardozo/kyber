@@ -23,6 +23,29 @@
     en vez de depender de desde dónde los invocaron. Un archivo de la raíz se
     alcanza subiendo dos niveles, y eso es lo único que sale del artefacto:
     `../../shared/*.json`.
+- **El scheme de callback de OAuth se deriva de su fuente y se chequea, nunca
+  se documenta.** El valor vive en el archivo de configuración del proveedor y
+  reaparece en el `Info.plist`; nada acopla las copias, y cuando se
+  desincronizan el sign-in **se va y no vuelve**, sin decir por qué. Un
+  comentario al lado no arregla eso: le pide a la próxima persona que se
+  acuerde en el momento exacto en que no se va a acordar. Y hay una forma peor
+  del comentario, medida acá: uno que decía «checked by los tests» cuando
+  ningún test nombraba el valor — una guarda que existía sólo en la oración que
+  la mencionaba, y que además desalienta escribir la de verdad porque parece
+  que ya está.
+  - La guarda **deriva** el valor esperado en vez de escribirlo. Escribirlo la
+    convierte en la copia siguiente de la cadena que existe para sostener, y
+    además seguiría pasando con todos los archivos mal de la misma manera.
+  - **Cada consumidor chequea la forma que tiene, no la del otro.** No es
+    adorno: en un repo el `Info.plist` **copia** el valor y en el otro lo
+    **interpola** desde una build setting, así que copiar la guarda del vecino
+    afirma algo sobre un archivo que no lo contiene. El primer uso real de una
+    guarda compartida es una medición, no una entrega.
+  - Dónde corre lo elige cada uno, como con la guarda de versiones. En tiempo
+    de build falla antes de publicar y ve el caso que el runtime no puede ver
+    —el `Info.plist` viejo con el proyecto ya corregido—; en runtime falla
+    cuando alguien toca «entrar». **Uno de los dos, no los dos**: dos
+    mecanismos para un trabajo terminan con el bueno tapando al malo.
 - **Sin librerías de gráficos.** Las barras son divs y las líneas SVG a mano.
 - **Lógica duplicada entre plataformas ⇒ vectores compartidos.** Si algo se
   implementa dos veces (en Swift y en TypeScript), los casos viven en
