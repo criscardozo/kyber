@@ -23,7 +23,7 @@ on:
       node-version:
         description: Node version for the runner.
         type: string
-        default: "22"
+        default: "24"
       retention-days:
         description: How long the artifact is kept. 90 is the ceiling on the free tier.
         type: number

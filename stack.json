@@ -1,7 +1,7 @@
 {
   "$comment": "The stack every consumer declares. `value` is the exact string a consumer's manifest, catalog, workflow or project.yml must carry; `required: false` marks tools a consumer may not use at all (a consumer that DOES use one must match). Read by each consumer's stack-agrees test, not by any script in kyber.",
   "pnpm": { "value": "11.4.0", "required": true },
-  "node": { "value": "22", "required": true },
+  "node": { "value": "24", "required": true },
   "java": { "value": "21", "required": true },
   "typescript": { "value": "^5.9.3", "required": true },
   "vitest": { "value": "^4.1.11", "required": true },

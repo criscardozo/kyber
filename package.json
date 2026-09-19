@@ -5,7 +5,7 @@
   "description": "What the household apps share: scripts that read the consumer's .kyber/config.json, the working rules that travel, and the declared stack.",
   "license": "MIT",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "test": "node --test && python3 -m unittest discover -q -s test -p 'test_*.py' > /dev/null",
