@@ -20,7 +20,6 @@ down a rule of its own.
 |---|---|
 | 📜 Rules | `docs/` — the working rules that travel, in Spanish as written. Each consumer imports them into its `CLAUDE.md`, so these are instruction, not only prose |
 | ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, the offline PWA check, the build-sign-install run for the phone, and the guard that keeps a consumer's two pointers at kyber in step. Each reads the consumer's own `.kyber/config.json` |
-| 🔁 Workflow | `.github/workflows/backup.yml` — the weekly Firestore dump as a reusable workflow. The consumer keeps the schedule and calls it; the minutes are the caller's |
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
 | 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
@@ -382,17 +381,27 @@ out not to qualify for reasons nobody had guessed:
   comparing the copies. There is no intersection to extract — a strategy has to
   be chosen first, and generating is the stronger one (see `docs/guardas.md`).
   That is a migration in a consumer, so it is Cristian's call, not this repo's.
-- **The reusable backup workflow is in**, approved. It was byte-identical in
-  both consumers apart from two sentences of comment.
+- **The reusable backup workflow came in, and is now OUT again** — removed
+  2026-09-20 with zero callers. It was byte-identical in both consumers when it
+  was extracted, so it qualified; what changed is not the code but the design
+  around it. The weekly dump no longer runs in either app: it runs in a private
+  repository that checks the apps out and commits the dumps into itself, so the
+  production credentials leave the repos that went public and the backups stop
+  expiring with the artifacts. That job orchestrates one repo, so it lives
+  there, and what it uses from here is `scripts/backup.mjs` — the logic, which
+  is what was ever worth sharing.
 
-  **In, and called by one of them.** The other still runs its own inlined copy
-  and takes only `kyber/scripts/` — which means a fix to the WORKFLOW does not
-  reach it, while its gitlink sits green and current. There are two adoption
-  paths into this repo, the reusable workflow and the scripts, and a consumer
-  can be fully up to date on one and never have touched the other. Sentences
-  here describing what "both consumers" do are about how the extraction
-  QUALIFIED, not about who calls what today; check `uses:` in the consumer
-  before assuming a workflow-level change landed there.
+  Kept as a note rather than deleted silently, because a file with no callers
+  and a README row describing it is worse than no file: it is a signpost to the
+  superseded design, and whoever wires up a fourth app would follow it and get
+  production dumps uploaded as artifacts again.
+
+  The observation it leaves behind is worth more than the file was: **there are
+  two adoption paths into this repo, the reusable workflow and the scripts, and
+  a consumer can be fully current on one and never have touched the other.**
+  Its gitlink is green either way, because it is current with everything it
+  actually consumes. Sentences here describing what "both consumers" do are
+  about how an extraction QUALIFIED, not about who calls what today.
 
   What the one-liner at the top of this file says and nobody costed: **the
   minutes are the caller's**. A `workflow_call` bills every minute against the
