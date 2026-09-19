@@ -130,38 +130,31 @@ scoped to the consumer's own repository.
 
 ## The weekly backup
 
-The job is a reusable workflow here, because it was byte-identical in two
-consumers. The consumer keeps the trigger — a reusable workflow cannot carry
-its own — and calls it:
+**It does not run in the consumer.** It used to: a reusable workflow lived in
+kyber and each consumer called it on a schedule, uploading the dump as a
+workflow artifact. That was removed on 2026-09-20, and the reason is worth
+knowing before anyone rebuilds it.
 
-```yaml
-name: Backup
-on:
-  schedule:
-    - cron: "0 20 * * 3"
-  workflow_dispatch:
-concurrency:
-  group: backup
-  cancel-in-progress: false
-permissions:
-  contents: read
-jobs:
-  dump:
-    uses: criscardozo/kyber/.github/workflows/backup.yml@<the same sha as the gitlink>
-    secrets:
-      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-```
+A workflow artifact on a PUBLIC repository is downloadable by anyone, and both
+consumers went public so their CI would stop billing minutes. Artifacts also
+expire — ninety days is the ceiling — so the oldest backup disappeared every
+week without anyone deciding it should. And the job needs production
+admin credentials, which should not sit as a secret in a repository that is
+public.
 
-Optional inputs: `node-version`, `retention-days`, `artifact-prefix`.
+So the dump runs from a **private** repository that checks each app out, runs
+`kyber/scripts/backup.mjs` through that app's own submodule, and commits the
+result into itself. What the consumer provides is nothing: no workflow, no
+secret, no `uses:`. What kyber provides is the script, which is the part that
+was ever worth sharing.
 
-Minutes are charged to the repository that CALLS a reusable workflow, so this
-costs exactly what the copy it replaces did.
+Two consequences for a consumer:
 
-**It makes a consumer point at kyber twice.** The gitlink says which commit of
-the scripts runs; the `uses:` ref says which commit of the workflow runs, and
-GitHub resolves that from the repository rather than from the checked-out
-submodule. Bump one and forget the other and the job is a workflow from one
-commit driving scripts from another, with nothing in the output saying so.
-`check-kyber-pins.mjs` is the guard: run it in CI, and pin a full sha rather
-than a branch or a tag, both of which change what runs without a commit in the
-consumer.
+- **No `FIREBASE_SERVICE_ACCOUNT` secret.** If one is still configured, it is
+  a credential with no caller in a public repository — remove it.
+- **A consumer now points at kyber exactly once**, through the gitlink. The
+  `uses:` ref is gone, so `check-kyber-pins.mjs` has nothing to compare and
+  neither consumer runs it. It stays in `scripts/` because the shape it guards
+  returns the moment anything here is called by ref again, and because its
+  cost while unused is zero — but it is a guard with no subject today, which
+  is different from a guard that passes.
