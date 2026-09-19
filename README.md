@@ -19,7 +19,7 @@ down a rule of its own.
 | | |
 |---|---|
 | 📜 Rules | `docs/` — the working rules that travel, in Spanish as written. Each consumer imports them into its `CLAUDE.md`, so these are instruction, not only prose |
-| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, the offline PWA check, the build-sign-install run for the phone, and the guard that keeps a consumer's two pointers at kyber in step. Each reads the consumer's own `.kyber/config.json` |
+| ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, the offline PWA check, the build-sign-install run for the phone. Each reads the consumer's own `.kyber/config.json` |
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
 | 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |

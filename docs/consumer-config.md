@@ -153,8 +153,13 @@ Two consequences for a consumer:
 - **No `FIREBASE_SERVICE_ACCOUNT` secret.** If one is still configured, it is
   a credential with no caller in a public repository — remove it.
 - **A consumer now points at kyber exactly once**, through the gitlink. The
-  `uses:` ref is gone, so `check-kyber-pins.mjs` has nothing to compare and
-  neither consumer runs it. It stays in `scripts/` because the shape it guards
-  returns the moment anything here is called by ref again, and because its
-  cost while unused is zero — but it is a guard with no subject today, which
-  is different from a guard that passes.
+  second pointer was the `uses:` ref, and the guard that kept the two in step
+  went with the workflow — not because it has no subject today, but because
+  **its subject cannot exist**: kyber publishes no workflow, so nothing here
+  can be called by ref. It exited 0 with `No workflow calls kyber` and a file
+  count, which is honest output under a name that promises more, and names are
+  read before outputs.
+
+  If a reusable workflow is ever published here again, **the guard comes back
+  in that same commit**. That is the rule that stops a guard outliving its
+  subject: it is born and dies with it, rather than staying on as a souvenir.
