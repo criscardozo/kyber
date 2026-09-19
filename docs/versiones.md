@@ -72,6 +72,18 @@
   y su CI corrió contra esa versión vieja. Es de las que no cambian el color de
   nada: el PR está verde por haber probado otra cosa. Antes de mergear, comparar
   `git rev-parse HEAD:kyber` de la rama contra el de la principal.
+- **Restaurar la declaración no restaura la resolución.** Probar un major y
+  volver atrás no es revertir: si se devuelve el manifiesto a su valor viejo y
+  se corre `install`, el gestor **vuelve a resolver contra el registro de hoy**
+  y las transitivas se mueven hacia adelante dentro de rangos que ya estaban
+  declarados. Medido en los dos consumidores: uno lo encontró al volver de un
+  experimento —tres `resolution:` movidas, lockfile distinto— y el otro lo
+  reprodujo a propósito para ver si le pasaba, con 15 inserciones y 21 borrados.
+  Un experimento «revertido» que deja tres dependencias movidas es la versión
+  chica de verificar un estado y publicar otro. Lo que sí revierte: devolver
+  **también el lockfile** desde git e instalar con `--frozen-lockfile`, que no
+  puede re-resolver. Eso separa las dos cosas — la declaración vuelve de git y
+  la resolución no se toca.
 - **Ojo con el bump que no cambia nada.** Un rango `^24.13.3` ya admite
   `24.13.4`, así que mover el rango declarado no cambia qué se instala: mueve
   la **intención** y arrastra tres repos por algo que el lockfile ya podía

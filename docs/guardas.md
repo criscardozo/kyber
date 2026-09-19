@@ -884,6 +884,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   remedio no es desconfiar del que reenvía: es que **quien va a actuar sobre el
   dato lo lea**. Cuando la fuente está en el disco, eso cuesta un comando; el
   que no lo corre está eligiendo la versión de segunda mano.
+
+  Y hay una selección que ocurre **antes** del relay y decide qué se relaya:
+  **una verificación que suena más específica que la que realmente sostiene la
+  conclusión se propaga en su lugar.** Medido en una cadena de dos saltos, sin
+  que nadie mintiera: un experimento con dependencias se verificó con dos
+  cosas a la vez, `git status --porcelain` en cero —que incluye el lockfile y
+  es estrictamente más fuerte— y el md5 del lockfile, que era **redundante con
+  la primera**. El que lo escribió puso el md5 de titular y el que lo reenvió
+  lo repitió como la garantía. El `git status` no es citable: es aburrido y
+  general. El md5 sí. Así que viajó el débil. Al reportar una verificación,
+  decir **cuál es la que sostiene** y no la que suena mejor; y al recibirla,
+  preguntar qué habría pasado si esa línea no estuviera.
 - **Dos revisores con el mismo marco no son dos revisores.** Es el límite del
   método, y salió midiéndolo: dos sesiones discutieron largo **en qué orden**
   iban dos commits, y ninguna preguntó por qué eran dos — el orden correcto era
