@@ -14,6 +14,21 @@
   - **No hay `.firebaserc`** en ninguna de las dos. El proyecto se nombra en
     `.kyber/config.json`, que es también de dónde lo leen los scripts
     compartidos.
+  - **`firebase.json` va en `firebase/` mientras no haya Hosting, y a la raíz
+    el día que lo haya.** No es un «depende»: es una restricción de la
+    herramienta, con nombre. El CLI toma como *project directory* el
+    directorio donde vive el config y **rechaza cualquier ruta que salga de
+    ahí** — `Config.path()` arma la ruta y tira `is outside of project
+    directory` si el relativo contiene `..`, sin flag para saltearlo
+    (verificado en el código de `firebase-tools@15.30.0`, el que declara
+    `stack.json`). Con el config en `firebase/` y la web en `apps/web/`, el
+    `public` de Hosting sólo puede escribirse `../apps/web`, y eso no compila.
+    Hoy no muerde porque los dos consumidores sirven la web en otro lado y su
+    `firebase.json` sólo tiene `firestore` y `emulators`, con rutas que apuntan
+    **hacia abajo** (`firestore.rules`, sin prefijo). El día que alguien agregue
+    un bloque `hosting`, lo único que sube es `firebase.json`; las reglas y los
+    índices se quedan en `firebase/` y el config los nombra desde arriba. Medido
+    por un proyecto hermano que siguió esta página al pie y se comió el error.
   - Adentro de `apps/ios/` las carpetas llevan **el nombre del producto**, no
     `App/`: `Producto/`, `ProductoTests/`, `ProductoWidget/`, `ProductoWatch/`.
     Es lo que XcodeGen espera cuando el target se llama igual.
