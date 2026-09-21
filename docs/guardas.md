@@ -212,6 +212,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   guarda anterior y no la nueva. La pregunta que lo separa: **¿este caso habría
   pasado igual antes de mi cambio?** Si la respuesta es sí, no es el control de
   este cambio, sea cual sea su color.
+
+  Y la forma de contestarla no es razonarla, es **medir el antes**. Un control
+  positivo dice «no rompí lo que andaba» y uno negativo dice «la restricción
+  bloquea», y los dos juntos **siguen siendo compatibles con que la restricción
+  ya estuviera puesta y vos no hubieras hecho nada**. Medido al restringir una
+  clave por identificador de aplicación: los tres casos —sin identificador, con
+  el correcto, con uno ajeno— daban el mismo error **antes** del cambio, y
+  después el correcto pasa a validar y los otros dos dan bloqueado. Esa tercera
+  corrida, la de antes, es la única que atribuye el cambio a quien lo hizo. Es
+  la sonda que puede dar el resultado contrario, corrida un paso más temprano.
 - **Un resultado limpio a la primera no distingue «está bien» de «mi máquina no
   ejerce esa dimensión».** Las dos se ven igual desde adentro, y la segunda ni
   siquiera es visible: nadie ve la dimensión que su entorno no toca. Dos casos
