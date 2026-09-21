@@ -234,6 +234,16 @@ midiendo, en las dos apps, y por eso viajan juntas.
   reporte propio había sido un falso positivo. Encontrar algo ya arreglado
   tiene dos lecturas indistinguibles —«lo arregló otro» y «medí mal»— y la
   cómoda es la primera.
+
+  Y el caso en que el objeto **no** recuerda nada: **un detector recién
+  encendido devuelve la lista vacía que va a tener hasta que corra, y esa lista
+  vacía es idéntica a la de un sujeto limpio.** La única diferencia está en el
+  tiempo, y la respuesta no lo trae. Medido publicándolo: se activaron las
+  alertas de dependencias en cinco repos y se leyó el resultado **en el mismo
+  comando**; el «cero abiertas en los cinco» que salió de ahí era el arranque
+  del escáner, y uno de los cinco tenía siete. No se lee un detector en la
+  misma respiración en que se lo enciende: se le da algo conocido para
+  encontrar, o se vuelve más tarde.
 - **Un resultado limpio a la primera no distingue «está bien» de «mi máquina no
   ejerce esa dimensión».** Las dos se ven igual desde adentro, y la segunda ni
   siquiera es visible: nadie ve la dimensión que su entorno no toca. Dos casos
