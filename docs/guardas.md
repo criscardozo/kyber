@@ -222,6 +222,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   después el correcto pasa a validar y los otros dos dan bloqueado. Esa tercera
   corrida, la de antes, es la única que atribuye el cambio a quien lo hizo. Es
   la sonda que puede dar el resultado contrario, corrida un paso más temprano.
+
+  Y cuando llegaste tarde para medir el antes, **preguntarle al objeto si
+  recuerda cuándo cambió**. Es más débil —dice *cuándo*, no *qué*— pero
+  contesta lo que importa: si estás viendo el estado viejo o el nuevo. Medido
+  al encontrar una restricción ya puesta: el `updateTime` de esa clave era de
+  setenta segundos antes, y el de la clave hermana de cuarenta horas antes e
+  intacto. Los dos sellos juntos dicen que alguien tocó una y no la otra, sin
+  que nadie hubiera corrido nada previo. Lo que le da filo es **para qué
+  pregunta se usa**: no para atribuirse el arreglo, sino para saber si el
+  reporte propio había sido un falso positivo. Encontrar algo ya arreglado
+  tiene dos lecturas indistinguibles —«lo arregló otro» y «medí mal»— y la
+  cómoda es la primera.
 - **Un resultado limpio a la primera no distingue «está bien» de «mi máquina no
   ejerce esa dimensión».** Las dos se ven igual desde adentro, y la segunda ni
   siquiera es visible: nadie ve la dimensión que su entorno no toca. Dos casos
