@@ -63,6 +63,25 @@ midiendo, en las dos apps, y por eso viajan juntas.
   no había nada en el repo que pudiera verlo. Agregar el quinto patrón no cierra
   nada: el conjunto de formas no tiene final. Lo que lo cierra es una guarda en
   el **resultado renderizado**, que no necesita conocer ninguna.
+- **Una medición refuta lo que midió, no la categoría a la que pertenece** — y
+  la categoría casi siempre tiene un nombre que agrupa cosas que no se miden
+  juntas. Dos veces en una semana, las dos del mismo lado: quien mide y después
+  le cuenta a los demás qué quedó cerrado.
+  - Se midió que commitear cierto archivo generado no lo hace visible a un
+    escáner de vulnerabilidades. Cierto. Se reportó como «no compra
+    visibilidad», y **«visibilidad» eran dos productos distintos**: el grafo de
+    dependencias, que no lo lee, y las actualizaciones automáticas, que sí — el
+    repo hermano tenía el bloque configurado y **seis pull requests reales** de
+    esas dependencias. El segundo mecanismo nunca entró en la medición porque
+    el nombre los agrupaba.
+  - Y antes, la misma acción tenía dos beneficios y sólo uno se midió: no
+    compra ese escaneo, y sí compra **saber qué se construyó**. Refutar el
+    primero se llevaba puesto el segundo, que nadie había enunciado.
+
+  Lo que lo hace difícil es que el reporte es verdadero y específico, así que
+  quien lo recibe lo archiva. El paso, antes de cerrar una vía: **nombrar qué
+  se midió exactamente, y preguntar qué más vive bajo la palabra con la que se
+  va a reportar.** Una vía cerrada con evidencia no se vuelve a abrir sola.
 - **Medir el proxy no es medir la cosa.** La familia entera de errores de un
   día: comparar archivos por **nombre** en vez de por lo que exportan, juzgar si
   dos funciones son iguales por su **cantidad de caracteres**, leer un diff
