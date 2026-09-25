@@ -369,6 +369,22 @@ midiendo, en las dos apps, y por eso viajan juntas.
   incorrecto nunca se ejercitó. Viajó solo a otro repo y ahí falló. **Dos
   mecanismos para el mismo trabajo no se refuerzan: el bueno le impide al malo
   mostrarse.**
+
+  Segunda vez, con otro mecanismo y la misma forma: **dos declaraciones del
+  mismo valor en capas distintas, donde una pisa a la otra en silencio.** El
+  piso de iOS estaba declarado dos veces en el proyecto de las dos apps, una en
+  las opciones del generador y otra como setting global. Medido **por las dos
+  apps por separado**, regenerando y leyendo el valor resultante: con las dos,
+  **gana el setting global y la opción no tiene ningún efecto**. La opción es
+  justo la que uno edita, porque es la que parece ser la declaración. Y una de
+  las dos mediciones es la que vale copiar: regenerar con y sin la línea daba
+  idéntico, que es lo que da tanto si sobra como si la sonda no ve la
+  diferencia — así que se puso el global en un valor y la opción en otro, y
+  **todos los targets tomaron el del global**. Sin ese control positivo,
+  «idéntico» no distinguía «redundante» de «dominante». El arreglo no fue una
+  guarda que las mantuviera iguales —eso deja las dos y ata una a la otra— sino
+  **sacar la que pisaba**, que además era la redundante. Una guarda sobre dos
+  copias que nada debería tener duplicadas es el síntoma, no la cura.
 - **Un total sobre una población más grande que la pregunta no sobra: degrada
   la respuesta.** Obliga a muestrear donde se podía enumerar. Al revisar si una
   clave privada se había filtrado en los logs de CI, la población se fijó como
