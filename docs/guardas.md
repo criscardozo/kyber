@@ -122,6 +122,18 @@ midiendo, en las dos apps, y por eso viajan juntas.
   coinciden hoy, el cambio es un no-op sobre los datos y sólo movió el método
   — que es exactamente lo que se quería. Si no coinciden, hay que poder
   nombrar cada archivo de la diferencia antes de aceptar el número nuevo.
+- **Si el arreglo no cambia lo que mide la prueba, lo primero que se sospecha
+  es la prueba.** Medido en kyber: para probar la confirmación de
+  `restore --production` bajo una pseudo-terminal, `script` con la entrada por
+  pipe entregaba el fin de entrada **antes** que el texto. Un id mal tipeado
+  salía como «sin respuesta»; eso se leyó como una carrera entre el cierre y la
+  respuesta, se cambió el código para evitarla, y la salida siguió idéntica.
+  Que el arreglo no moviera el resultado era la señal, y en lugar de leerla se
+  escribió la carrera en un comentario. Lo desarmó un caso cuyo resultado se
+  sabía de antemano: con el texto llegando un segundo antes que el fin, el id
+  equivocado dio «Did not match». El comentario salió antes del commit; la
+  carrera nunca estuvo medida. Un arnés se valida con un caso de resultado
+  conocido antes de pedirle uno que no se conoce.
 - **Un escaneo por patrones nombrados no falla por no conocer el patrón: falla
   por el contexto en el que el patrón está escrito.** Medido caracterizando un
   escáner de secretos con 17 delimitadores: la misma clave, bien formada, se
@@ -307,6 +319,21 @@ midiendo, en las dos apps, y por eso viajan juntas.
   que el primer uso real de algo compartido es una medición, no una entrega, y
   la pregunta que la cobra es «¿en qué difirió tu forma de usarlo de mi forma
   de probarlo?» — preguntada mientras el que cableó todavía se acuerda.
+
+  Tercera vez, y esta vez antes de publicar, porque el cableado ajeno se puede
+  correr sin esperar a que el consumidor lo cablee. Una revisión de `verify`
+  encontró que comparaba sin sangría y pasaba archivos que `--write` se niega a
+  reindentar, y propuso comparar la sangría siempre. Los tests, escritos desde
+  ese caso —declaraciones que traen su margen—, pasaron. Corrido contra los
+  emisores de los dos consumidores, sobre una copia de su HEAD, uno se puso en
+  rojo sobre una hoja de estilos que su propio `--write` deja idéntica: emite
+  declaraciones sin margen y su patrón respeta el del archivo, una forma
+  legítima que ningún test tenía. La regla que sirve ya estaba escrita en el
+  código: la de `write`, que compara el margen sólo cuando la declaración trae
+  el suyo. **Una guarda que se endurece para coincidir con otra parte del
+  código se deriva de la regla de esa parte, no del caso que la motivó** — y
+  antes de publicarla se corre contra cada consumidor real, que cuesta un
+  comando cuando están en la misma máquina.
 
 ### Conteos, totales y comparaciones
 
