@@ -1,0 +1,42 @@
+name: CI
+
+# The same two commands the pre-push hook runs, on a machine that is not the
+# author's. The hook only runs in a clone where somebody set core.hooksPath,
+# it can be skipped with --no-verify, and it only ever runs on macOS; this
+# runs on every push and pull request, on Linux, for anyone.
+#
+# Free because of two facts, and both are checked rather than assumed: this
+# repository is public, and public repositories bill nothing for standard
+# runners — and every job here is `ubuntu-*`, which test/stack.test.mjs
+# enforces. If this repository ever goes private, this file starts billing
+# the account's shared allowance, and the hook already runs the same thing
+# for free: delete the file then, rather than let it bill.
+#
+# kyber installs nothing, so there is no install step and no cache to keep.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - name: Syntax of every tracked .mjs, .py and hook
+        run: npm run -s check
+      - name: node --test and unittest
+        run: npm test

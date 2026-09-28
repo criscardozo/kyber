@@ -22,7 +22,7 @@ down a rule of its own.
 | ⚙️ Tooling | `scripts/` — Firestore backup and restore, the deployed-rules drift check, a rules-test runner that finds a free port, the version bump across web and iOS, the offline PWA check, the build-sign-install run for the phone. Each reads the consumer's own `.kyber/config.json` |
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
-| 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
+| 🧪 Tests | `test/` — `node --test` against a fixture consumer and `unittest` for the token machinery, no install needed; run by the pre-push hook and by CI on Linux |
 | 🎨 Tokens | `design/tokens.py` — the machinery both token emitters were writing twice: the walk, the value spelling, the in-place rewrite, the anchored block for a file that names no token yet, and verify/write. Each consumer keeps its own palette and its own declaration spelling |
 | 💎 Mark | `icon.svg` — the crystal, hand-drawn. `icon.png` renders it; `banner.png` is built from it by `design/build-banner.mjs` |
 
@@ -268,6 +268,14 @@ whose message described an edit that had failed its own assertion: the check
 had happened, it was simply not what the push depended on. Both finish in
 under a second, measured — the usual reason for keeping tests out of a hook is
 a guess about how long they take.
+
+CI runs the same two commands on every push and pull request, on Linux
+(`.github/workflows/ci.yml`), because the hook only runs in a clone that
+installed it, can be skipped, and only ever runs on macOS. It costs nothing
+for two reasons: the repo is public, and every job is `ubuntu-*` — the second
+enforced by `test/stack.test.mjs`, the first a setting no test can read. If
+the repo ever goes private, delete the workflow rather than let it bill; the
+hook already runs the same thing for free.
 
 It deliberately does NOT grep for consumer names. The first version did, and
 rejected the commit installing it: to grep for a consumer's ids and ports the

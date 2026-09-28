@@ -34,3 +34,22 @@ test("every peer dependency starts at the major stack.json declares", () => {
 test("engines.node starts at the node stack.json declares", () => {
   assert.equal(major(manifest.engines.node), major(stack.node.value));
 });
+
+// The CI file states the node version a third time, for a third reader.
+const ci = readFileSync(join(ROOT, ".github", "workflows", "ci.yml"), "utf8");
+
+test("CI runs the node stack.json declares", () => {
+  const versions = [...ci.matchAll(/node-version:\s*"?(\d+)/g)].map((m) => Number(m[1]));
+  assert.ok(versions.length > 0, "no node-version in ci.yml");
+  for (const v of versions) assert.equal(v, major(stack.node.value));
+});
+
+test("every CI job runs on Linux, which is what keeps it free", () => {
+  // Public repositories bill nothing for standard runners, and a private one
+  // bills macOS at ten times the minutes. The first half is a setting on
+  // GitHub that no test here can read; this is the half that lives in the
+  // file, and the half a well-meant edit would change.
+  const runners = [...ci.matchAll(/runs-on:\s*(\S+)/g)].map((m) => m[1]);
+  assert.ok(runners.length > 0, "no runs-on in ci.yml");
+  assert.deepEqual(runners.filter((r) => !r.startsWith("ubuntu-")), []);
+});
