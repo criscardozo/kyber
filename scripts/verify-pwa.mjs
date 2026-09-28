@@ -79,12 +79,18 @@ async function main() {
   // 2) The shell routes AND the hashed assets they point at. The assets are
   // the half that used to be missing: with the HTML cached and none of the
   // code, an offline reload finds the page and nothing it needs.
+  // Every cache, not the first one: both consumers keep a single cache
+  // today, and the first name is only the right one for as long as that
+  // stays true. A worker that opens a runtime cache before its precache
+  // finishes would have failed this with every route "missing".
   const readCache = () =>
     page.evaluate(async () => {
-      const names = await caches.keys();
-      if (names.length === 0) return [];
-      const cache = await caches.open(names[0]);
-      return (await cache.keys()).map((r) => new URL(r.url).pathname);
+      const paths = [];
+      for (const name of await caches.keys()) {
+        const cache = await caches.open(name);
+        for (const request of await cache.keys()) paths.push(new URL(request.url).pathname);
+      }
+      return paths;
     });
   // Let the install settle before asserting, and before cutting the network.
   await until(async () => precacheVerdict(await readCache(), pwa).pass);

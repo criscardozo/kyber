@@ -120,6 +120,11 @@ async function main() {
   const stash = mkdtempSync(join(tmpdir(), "kyber-profiles-"));
   const derived = mkdtempSync(join(tmpdir(), "kyber-dd-"));
   let renewed = false;
+  // The build directory is a whole Debug build, hundreds of MB, and it was
+  // left in $TMPDIR on every run. It goes in `finally` unless the build
+  // failed, in which case its log is the one thing worth keeping, and the
+  // error says where it is — before, nothing did.
+  let keepLog = false;
 
   const restoreProfiles = () => {
     // Guard 3: only on failure, and only what is actually missing.
@@ -192,7 +197,8 @@ async function main() {
             "   y corriendo esto otra vez.",
         );
       }
-      throw new KyberError(`   el build terminó en ${status}.`);
+      keepLog = true;
+      throw new KyberError(`   el build terminó en ${status}. Log completo: ${log}`);
     }
     console.log("   BUILD SUCCEEDED (exit 0, no leído del texto)");
     // Past here the old profiles are superseded, not worth putting back.
@@ -280,6 +286,7 @@ async function main() {
   } finally {
     restoreProfiles();
     rmSync(stash, { recursive: true, force: true });
+    if (!keepLog) rmSync(derived, { recursive: true, force: true });
   }
 }
 

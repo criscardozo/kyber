@@ -64,7 +64,9 @@ async function usablePort(pinned, requested) {
     return (await isFree(pinned)) ? pinned : freePort();
   }
   const port = Number(requested);
-  if (!Number.isInteger(port) || port <= 0) {
+  // Above 65535 too: listen() throws on it synchronously, inside isFree's
+  // promise, and the sentence below became a stack trace.
+  if (!Number.isInteger(port) || port <= 0 || port > 65535) {
     throw new KyberError(`FIRESTORE_EMULATOR_PORT="${requested}" is not a port.`);
   }
   if (!(await isFree(port))) {
@@ -140,6 +142,13 @@ async function main() {
       },
     },
   );
+  // A child that never started emits `error` and no `exit`. With no listener
+  // that was an uncaught exception, and the temporary config stayed behind.
+  child.on("error", (error) => {
+    rmSync(tmp, { recursive: true, force: true });
+    console.error(`Could not start the emulator: ${error.message}`);
+    process.exit(1);
+  });
   child.on("exit", (code, signal) => {
     rmSync(tmp, { recursive: true, force: true });
     // The child's status, not this script's: a wrapper that swallows a

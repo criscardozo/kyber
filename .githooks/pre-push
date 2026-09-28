@@ -38,7 +38,10 @@ echo "pre-push: syntax"
 npm run -s check
 
 echo "pre-push: tests"
-node --test > /dev/null
+# The dot reporter rather than silence: a red push used to show only
+# "pre-push: tests" and an exit code, and finding out which test broke meant
+# running the suite again. Dots for the passes, the failures in full.
+node --test --test-reporter=dot
 # The Python half is the token emitter's machinery. It runs here for the same
 # reason the rest does, and it stays here because it is fast: unittest needs no
 # install, like node --test.

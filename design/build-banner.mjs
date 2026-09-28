@@ -30,7 +30,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 
 const ROOT = join(import.meta.dirname, "..");
 const OUT = join(ROOT, "banner.png");
