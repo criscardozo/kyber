@@ -8,8 +8,9 @@
 // these projects — there is no backend — so a fix that was written, reviewed,
 // merged and never deployed reads as done in every place anyone would look.
 //
-// Runs weekly beside the backup, on the same service account and the same
-// runner, so it costs no extra minutes worth counting.
+// Runs weekly beside the backup, in the private backups repo, on the same
+// service account and the same runner, so it costs no extra minutes worth
+// counting.
 //
 // Usage: GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json node kyber/scripts/check-rules-drift.mjs
 // Reads from .kyber/config.json: projectId, firebaseDir.

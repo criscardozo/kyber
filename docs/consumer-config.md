@@ -20,11 +20,11 @@ consumer can carry settings for a later batch before kyber reads them.
 
 | key | type | read by | meaning |
 | --- | --- | --- | --- |
-| `name` | string | backup, restore, run-rules-tests | Short lowercase label. Names dump files (`<name>-<source>-<stamp>.json`) and temp dirs. |
-| `projectId` | string | all | The production Firebase project. A service-account key for any other project is refused. |
+| `name` | string | backup, run-rules-tests | Short lowercase label. Names dump files (`<name>-<source>-<stamp>.json`) and temp dirs. |
+| `projectId` | string | backup, restore, check-rules-drift | The production Firebase project. A service-account key for any other project is refused. |
 | `emulatorProjectId` | string | backup, restore | The id `pnpm emulators` runs under. May equal `projectId` on purpose: rules whose `get()` must resolve in the real namespace need the real id. |
 | `rulesTestsProjectId` | string | run-rules-tests | The id the rules suite runs the emulator under. |
-| `firebaseDir` | path | all | Directory holding `firebase.json`, `firestore.rules`, `firestore.indexes.json` and the gitignored `service-account.json`. Relative to the consumer root. |
+| `firebaseDir` | path | backup, restore, check-rules-drift, run-rules-tests | Directory holding `firebase.json`, `firestore.rules`, `firestore.indexes.json` and the gitignored `service-account.json`. Relative to the consumer root. |
 | `rulesTestsDir` | path | run-rules-tests | The rules-tests workspace: `firebase-tools` and `vitest` resolve from there, and `vitest run` runs there. |
 | `restore.legacyIsoTimestamps` | boolean, optional | restore | `true` only for a consumer with real dumps from before the tagged format. Enables the legacy heuristic for dumps without a `format` field. Absent means the heuristic does not exist. |
 | `bundleId` | string | install-ios | The app's bundle identifier. Its provisioning profiles are matched on the identifier entitlement, exactly and by prefix — never as a substring. |
@@ -48,11 +48,13 @@ Wire them from the consumer's `package.json`:
 {
   "scripts": {
     "backup": "node kyber/scripts/backup.mjs",
-    "restore": "node kyber/scripts/restore.mjs",
-    "rules:drift": "node kyber/scripts/check-rules-drift.mjs"
+    "restore": "node kyber/scripts/restore.mjs"
   }
 }
 ```
+
+`check-rules-drift.mjs` is not wired here: it needs the production service
+account, so it runs weekly from the private backups repo, after the dump.
 
 and, in the rules-tests workspace, `"test": "node ../../kyber/scripts/run-rules-tests.mjs"`
 (the runner reads `rulesTestsDir` from the config, so it can be invoked from
@@ -61,11 +63,10 @@ anywhere in the consumer).
 | script | reads | environment |
 | --- | --- | --- |
 | `backup.mjs` | name, projectId, emulatorProjectId, firebaseDir | `GOOGLE_APPLICATION_CREDENTIALS` for production; `FIRESTORE_EMULATOR_HOST` to read the emulator; `BACKUP_PROJECT_ID` to label an emulator dump. |
-| `restore.mjs` | the same, plus `restore.*` | Emulator by default (the consumer's own port, or `FIRESTORE_EMULATOR_HOST`), only ever a local host. `--production` refuses a dump from another project, a dump not read from production, and a set `FIRESTORE_EMULATOR_HOST`; then asks for the project id typed. |
+| `restore.mjs` | projectId, emulatorProjectId, firebaseDir, `restore.*` | Emulator by default (the consumer's own port, or `FIRESTORE_EMULATOR_HOST`), only ever a local host. `--production` refuses a dump from another project, a dump not read from production, and a set `FIRESTORE_EMULATOR_HOST`; then asks for the project id typed. |
 | `set-version.mjs` | iosTargets, webManifest, iosProject | Nothing. Refuses before writing if a named target is missing, if an unnamed one carries a version, or if any `CFBundleShortVersionString` is a literal instead of `$(MARKETING_VERSION)`. |
 | `verify-pwa.mjs` | the `pwa` block, webDir | `PWA_BASE_URL` overrides the host. Needs a PRODUCTION server already running: against a dev server the worker never registers and the check passes without testing anything. |
 | `install-ios.mjs` | bundleId, iosScheme, iosDir, iosDevice, webManifest | Sets the app's profiles aside, builds, and refuses to install unless the reissued signature has over a day left AND the built bundle shows the declared version. Puts the profiles back only when the build fails. |
-| `check-kyber-pins.mjs` | nothing | Compares every `uses: criscardozo/kyber/...@<sha>` in the consumer's workflows against `git rev-parse HEAD:kyber`. |
 | `check-rules-drift.mjs` | projectId, firebaseDir | `GOOGLE_APPLICATION_CREDENTIALS`. Exit 1 when the deployed ruleset differs from `firestore.rules`. |
 | `run-rules-tests.mjs` | name, rulesTestsProjectId, firebaseDir, rulesTestsDir | `FIRESTORE_EMULATOR_PORT` to pin a port (busy means stop, not move). |
 

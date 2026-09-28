@@ -2,7 +2,7 @@
   <img src="banner.png" alt="Kyber" width="360">
 </p>
 
-The shared layer for three household apps by the same author, on the same stack
+The shared layer for the household apps of one author, on the same stack
 — SwiftUI on iOS with a widget and a watch app, Next.js on the web, Firebase on
 the Spark free tier, GitHub Actions on Linux only — which kept growing the same
 scripts and the same working rules in parallel and letting them drift. Consumed
@@ -56,8 +56,8 @@ node kyber/scripts/restore.mjs backups/<file>.json
 node kyber/scripts/check-rules-drift.mjs
 
 # working on kyber itself:
-pnpm check                         # node --check on every script and test
-pnpm test                          # node --test, nothing to install
+pnpm check                         # syntax of every tracked .mjs, .py and hook
+pnpm test                          # node --test and unittest, nothing to install
 ```
 
 The full wiring, step by step, is [below](#adopting-it-in-a-new-project); the
@@ -140,14 +140,15 @@ last step is how you find out it worked. The contract key by key is in
    {
      "scripts": {
        "backup": "node kyber/scripts/backup.mjs",
-       "restore": "node kyber/scripts/restore.mjs",
-       "rules:drift": "node kyber/scripts/check-rules-drift.mjs"
+       "restore": "node kyber/scripts/restore.mjs"
      }
    }
    ```
 
    and, in the rules-tests workspace,
    `"test": "node ../../kyber/scripts/run-rules-tests.mjs"`.
+   `check-rules-drift.mjs` needs production credentials, so neither consumer
+   wires it: it runs weekly from the private backups repo, after the dump.
 
 6. **Take the host and port out of the rules-test helper.**
    `@firebase/rules-unit-testing` prefers an explicit `host`/`port` over
@@ -204,7 +205,7 @@ last step is how you find out it worked. The contract key by key is in
 
 Each consumer imports these files into its `CLAUDE.md` with
 `@kyber/docs/<file>.md`. So a file in here is not documentation a person may
-read — it is text an agent loads and follows in three projects, and **moving a
+read — it is text an agent loads and follows in every consumer, and **moving a
 consumer's gitlink is what applies it**.
 
 Every working rule lives here, including the ones that authorise rather than
@@ -400,11 +401,12 @@ out not to qualify for reasons nobody had guessed:
   superseded design, and whoever wires up a fourth app would follow it and get
   production dumps uploaded as artifacts again.
 
-  The observation it leaves behind is worth more than the file was: **there are
-  two adoption paths into this repo, the reusable workflow and the scripts, and
-  a consumer can be fully current on one and never have touched the other.**
-  Its gitlink is green either way, because it is current with everything it
-  actually consumes. Sentences here describing what "both consumers" do are
+  The observation it leaves behind is worth more than the file was: **while
+  there were two adoption paths into this repo, the reusable workflow and the
+  scripts, a consumer could be fully current on one and never have touched the
+  other.** Its gitlink was green either way, because it was current with
+  everything it actually consumed. There is one path now; the lesson holds for
+  the next time there are two. Sentences here describing what "both consumers" do are
   about how an extraction QUALIFIED, not about who calls what today.
 
   What the one-liner at the top of this file says and nobody costed: **the
@@ -417,12 +419,15 @@ out not to qualify for reasons nobody had guessed:
   And the cadence is what spends it, not the size of the change: a consumer
   running three jobs per push pays per push. A private repo's free allowance
   is shared across the whole account, so one consumer's busy week is the other
-  consumer's outage. A PUBLIC repository bills nothing at all for standard
-  runners, which is the only lever here that is not a diet — but read the
-  guard in `backup.yml` before pulling it: this workflow uploads the whole
-  database as an artifact, and on a public repo anyone can download it. That is not hypothetical — one of them ran out mid-month
+  consumer's outage. That is not hypothetical — one of them ran out mid-month
   and its scheduled backup simply stopped getting a runner, silently enough
   that it was found while doing something else.
+
+  A PUBLIC repository bills nothing at all for standard runners, which is the
+  only lever here that is not a diet, and both consumers pulled it. What made
+  that safe is what the removed workflow did: it uploaded the whole database
+  as an artifact, and on a public repo anyone can download one. The dump moved
+  to the private repo before the apps went public.
 
 The **pre-push hook** is now earned in two — both consumers have one, and so
 does this repo — and it still does not come in, under the second clause of the

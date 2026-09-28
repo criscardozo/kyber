@@ -1,6 +1,6 @@
 # La máquina
 
-Reglas de la computadora donde corren los tres proyectos. Son de la máquina, no
+Reglas de la computadora donde corren kyber y sus consumidores. Son de la máquina, no
 de la app, así que valen igual en cualquiera de ellos.
 
 - **No tocar el stack de Docker propio del puerto 8080.** Es el default de

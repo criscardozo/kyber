@@ -8,9 +8,11 @@
   adentro vive todo lo que es de **ese** artefacto, y lo que es del repositorio
   cuelga de la raíz: `firebase/` (con `firebase.json`, `firestore.rules`,
   `firestore.indexes.json` y `rules-tests/`), `.github/workflows/`, `scripts/`,
-  `docs/`, `shared/`, y el submódulo `kyber/`. La regla para decidir dónde va
-  algo es de quién es, no quién lo usa: las reglas de Firestore las usa la web
-  y las prueba un runner, pero son del proyecto, así que están en la raíz.
+  `docs/`, `shared/`, `design-system/` (los tokens y su emisor, que escriben en
+  más de un artefacto), `tools/` (lo que se corre a mano y no se despliega) y
+  el submódulo `kyber/`. La regla para decidir dónde va algo es de quién es, no
+  quién lo usa: las reglas de Firestore las usa la web y las prueba un runner,
+  pero son del proyecto, así que están en la raíz.
   - **No hay `.firebaserc`** en ninguna de las dos. El proyecto se nombra en
     `.kyber/config.json`, que es también de dónde lo leen los scripts
     compartidos.

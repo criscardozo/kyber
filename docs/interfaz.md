@@ -8,8 +8,10 @@ que es otra cosa y se puede detectar.
 
 ## CSS
 
-- **Los tokens viven en `:root`; Tailwind sólo los mapea** (`@theme inline`). El
-  día que haya modo oscuro es un bloque de tokens más, no un rediseño.
+- **Los tokens viven en `:root`; Tailwind sólo los mapea** (`@theme inline`). Por
+  eso el modo oscuro es un bloque de tokens más y no un rediseño: en las dos
+  apps es `@media (prefers-color-scheme: dark)` más `:root[data-theme="dark"]`,
+  los mismos nombres con otros valores.
 - **Los controles de formulario se estilan en `@layer base`.** Una regla sin
   capa le gana a cualquier utilidad de Tailwind por específica que sea: un
   `bg-*` escrito en un `<input>` pierde en silencio.
