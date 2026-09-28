@@ -287,5 +287,5 @@ run(main, {
   usage:
     "Usage: node kyber/scripts/install-ios.mjs [--device <udid-or-name>]\n" +
     "  Without --device it uses IOS_DEVICE, then iosDevice from .kyber/config.json.",
-  flags: ["--device"],
+  values: ["--device"],
 });

@@ -21,30 +21,38 @@ export class KyberError extends Error {
  * exactly like the one that was asked for.
  *
  * Operands are refused too unless the script says how many it takes, and that
- * default is the strict one on purpose — six of the eight scripts here take
+ * default is the strict one on purpose — five of the seven scripts here take
  * none, so `backup.mjs production` should not read as `backup.mjs`. The one
  * script that had this check written by hand refused stray operands as well,
  * and moving it to the shared gate had to keep that rather than quietly
- * loosen it. Values that follow a flag are not operands and are not counted.
+ * loosen it.
+ *
+ * `flags` are switches; `values` are flags that take the next argument, which
+ * is then not an operand. The two are declared apart because guessing was
+ * wrong: when any declared flag swallowed the argument after it,
+ * `restore --production old.json new.json` read `old.json` as the value of
+ * `--production`, counted one operand, and ran — restoring `old.json` with
+ * `new.json` dropped in silence. A value flag with nothing after it is refused
+ * rather than left for the script to discover.
  */
-export function gate(argv, { usage, flags = [], operands = 0 } = {}) {
+export function gate(argv, { usage, flags = [], values = [], operands = 0 } = {}) {
   if (argv.includes("--help") || argv.includes("-h")) {
     return { action: "help", message: usage };
   }
-  const known = new Set([...flags, "--help", "-h"]);
+  const switches = new Set([...flags, "--help", "-h"]);
+  const valued = new Set(values);
   const unknown = [];
   const loose = [];
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg.startsWith("-")) {
-      if (known.has(arg)) {
-        // A declared flag consumes the next argument only when one follows
-        // that is not itself a flag, which is how `--device <udid>` works
-        // without a table of which flags take values.
-        if (i + 1 < argv.length && !argv[i + 1].startsWith("-")) i += 1;
+    if (valued.has(arg)) {
+      if (i + 1 < argv.length && !argv[i + 1].startsWith("-")) {
+        i += 1;
       } else {
-        unknown.push(arg);
+        unknown.push(`${arg} (needs a value)`);
       }
+    } else if (arg.startsWith("-")) {
+      if (!switches.has(arg)) unknown.push(arg);
     } else {
       loose.push(arg);
     }
@@ -75,6 +83,7 @@ export function run(main, options = {}) {
   const { action, message } = gate(process.argv.slice(2), {
     usage: options.usage ?? `Usage: node ${process.argv[1] ?? "script"}`,
     flags: options.flags,
+    values: options.values,
     operands: options.operands,
   });
   if (action === "help") {

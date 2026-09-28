@@ -49,13 +49,33 @@ test("a declared flag and its operand run", () => {
 
 test("a flag's value is not counted as an operand", () => {
   assert.equal(
-    gate(["--device", "iPhone"], { usage: USAGE, flags: ["--device"] }).action,
+    gate(["--device", "iPhone"], { usage: USAGE, values: ["--device"] }).action,
     "run",
   );
 });
 
+test("a switch does not swallow the argument after it", () => {
+  // The case this was written for: `--production old.json new.json` used to
+  // read old.json as the value of --production, count one operand, and run
+  // with new.json dropped. The same line with one operand still runs.
+  const options = { usage: USAGE, flags: ["--production"], operands: 1 };
+  const { action, message } = gate(["--production", "old.json", "new.json"], options);
+  assert.equal(action, "refuse");
+  assert.match(message, /new\.json/);
+  assert.equal(gate(["old.json", "--production"], options).action, "run");
+});
+
+test("a value flag with nothing after it is refused, not left to the script", () => {
+  const options = { usage: USAGE, values: ["--device"] };
+  for (const argv of [["--device"], ["--device", "--other"]]) {
+    const { action, message } = gate(argv, options);
+    assert.equal(action, "refuse");
+    assert.match(message, /--device \(needs a value\)/);
+  }
+});
+
 test("a stray operand is refused when the script takes none", () => {
-  // Six of the eight scripts take no arguments at all, so `backup production`
+  // Five of the seven scripts take no arguments at all, so `backup production`
   // must not read as `backup`.
   const { action, message } = gate(["production"], { usage: USAGE });
   assert.equal(action, "refuse");
