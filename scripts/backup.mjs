@@ -26,23 +26,42 @@ import { DUMP_FORMAT, createCodec, dumpFileName } from "./lib/dump.mjs";
 import { run } from "./lib/errors.mjs";
 
 // Recursively serialise a document's data plus every subcollection.
-async function dumpDoc(serialize, docRef) {
-  const snap = await docRef.get();
-  const out = { id: docRef.id, data: serialize(snap.data() ?? {}, docRef.path) };
-  const subcollections = await docRef.listCollections();
+async function dumpDoc(serialize, db, snap) {
+  const out = { id: snap.id };
+  if (snap.exists) {
+    out.data = serialize(snap.data(), snap.ref.path);
+  } else {
+    out.missing = true;
+  }
+  const subcollections = await snap.ref.listCollections();
   if (subcollections.length > 0) {
     out.collections = {};
     for (const sub of subcollections) {
-      out.collections[sub.id] = await dumpCollection(serialize, sub);
+      out.collections[sub.id] = await dumpCollection(serialize, db, sub);
     }
   }
   return out;
 }
 
-async function dumpCollection(serialize, collRef) {
-  const snap = await collRef.get();
+// `listDocuments()`, not `get()`: a query returns only documents that exist,
+// so a deleted parent whose subcollections are still there — an italic id in
+// the console — took everything under it out of the dump without a word. The
+// listing includes those, and `getAll` says which ones have no document. Each
+// document's data is also fetched once now; the query's snapshot used to be
+// thrown away and every document fetched again.
+//
+// Sorted by id so a week's dump diffs against the last one by content, not by
+// whatever order the listing came back in.
+async function dumpCollection(serialize, db, collRef) {
+  const refs = (await collRef.listDocuments()).sort((a, b) =>
+    a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
+  );
   const docs = [];
-  for (const doc of snap.docs) docs.push(await dumpDoc(serialize, doc.ref));
+  for (let i = 0; i < refs.length; i += 100) {
+    for (const snap of await db.getAll(...refs.slice(i, i + 100))) {
+      docs.push(await dumpDoc(serialize, db, snap));
+    }
+  }
   return docs;
 }
 
@@ -86,7 +105,7 @@ async function main() {
   };
   for (const coll of await db.listCollections()) {
     process.stdout.write(`  dumping ${coll.id}...`);
-    dump.collections[coll.id] = await dumpCollection(serialize, coll);
+    dump.collections[coll.id] = await dumpCollection(serialize, db, coll);
     process.stdout.write(` ${dump.collections[coll.id].length} docs\n`);
   }
 

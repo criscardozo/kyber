@@ -12,14 +12,15 @@
 //
 // Every document in the dump is written over whatever is there; documents that
 // exist today but are not in the dump are left alone. This restores, it does
-// not wipe.
+// not wipe. A document the dump marks `missing` did not exist when it was
+// taken: what was under it is restored, and it is not created.
 //
-// Reads from .kyber/config.json: name, projectId, emulatorProjectId,
-// firebaseDir, and optionally restore.legacyIsoTimestamps.
+// Reads from .kyber/config.json: projectId, emulatorProjectId, firebaseDir,
+// and optionally restore.legacyIsoTimestamps.
 
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { createInterface } from "node:readline/promises";
+import { createInterface } from "node:readline";
 import { loadFirebaseAdmin } from "./lib/admin.mjs";
 import { loadConsumer } from "./lib/consumer.mjs";
 import { loadServiceAccount } from "./lib/credentials.mjs";
@@ -29,22 +30,16 @@ import { KyberError, run } from "./lib/errors.mjs";
 
 function readDump(file) {
   if (!existsSync(file)) throw new KyberError(`No such dump: ${file}`);
-  const dump = JSON.parse(readFileSync(file, "utf8"));
+  let dump;
+  try {
+    dump = JSON.parse(readFileSync(file, "utf8"));
+  } catch (error) {
+    throw new KyberError(`${file} is not JSON: ${error.message}`);
+  }
   if (dump === null || typeof dump.collections !== "object" || dump.collections === null) {
     throw new KyberError(`${file} is not a backup: no top-level "collections".`);
   }
   return dump;
-}
-
-/** Write one document and everything under it, counting per collection path. */
-async function restoreDoc(db, revive, collectionPath, doc, counts) {
-  await db.collection(collectionPath).doc(doc.id).set(revive(doc.data ?? {}));
-  counts[collectionPath] = (counts[collectionPath] ?? 0) + 1;
-  for (const [name, docs] of Object.entries(doc.collections ?? {})) {
-    for (const child of docs) {
-      await restoreDoc(db, revive, `${collectionPath}/${doc.id}/${name}`, child, counts);
-    }
-  }
 }
 
 async function confirmProduction(file, dump, projectId) {
@@ -55,7 +50,12 @@ async function confirmProduction(file, dump, projectId) {
       "  Every document in the dump is written over whatever is there now.\n" +
       "  Documents that exist today but are NOT in the dump are left alone.\n",
   );
-  const answer = await rl.question("  Type the project id to continue: ");
+  // A closed input is a no. Without this, input that ends before an answer
+  // (Ctrl-D) left the question pending forever.
+  const answer = await new Promise((settle, fail) => {
+    rl.once("close", () => fail(new KyberError("  No answer. Nothing was written.")));
+    rl.question("  Type the project id to continue: ", settle);
+  });
   rl.close();
   if (answer.trim() !== projectId) {
     throw new KyberError("  Did not match. Nothing was written.");
@@ -64,7 +64,7 @@ async function confirmProduction(file, dump, projectId) {
 
 async function main() {
   const { config, dir } = loadConsumer({
-    required: ["name", "projectId", "emulatorProjectId", "firebaseDir"],
+    required: ["projectId", "emulatorProjectId", "firebaseDir"],
   });
   const args = process.argv.slice(2);
   const production = args.includes("--production");
@@ -75,10 +75,10 @@ async function main() {
   const file = resolve(arg);
   const dump = readDump(file);
   const { cert, initializeApp, getFirestore, Timestamp } = await loadFirebaseAdmin();
-  const { selectReviver } = createCodec({ Timestamp });
-  // Decided before anything is opened: a dump this restore cannot read is
-  // refused with nothing written, not halfway through.
-  const revive = selectReviver(dump, config);
+  const { restorePlan } = createCodec({ Timestamp });
+  // Decided before anything is opened: a dump this restore cannot read, down
+  // to one bad value in one document, is refused with nothing written.
+  const writes = restorePlan(dump, config);
   const emulator = process.env.FIRESTORE_EMULATOR_HOST;
 
   if (production) {
@@ -110,6 +110,14 @@ async function main() {
         "FIRESTORE_EMULATOR_HOST is set and --production was passed. Pick one.",
       );
     }
+    // The confirmation is a person typing the project id. With no terminal
+    // there is no person, and the question used to sit there forever.
+    if (!process.stdin.isTTY) {
+      throw new KyberError(
+        "--production asks for the project id typed, and stdin is not a terminal.\n" +
+          "  Run it from an interactive shell. Nothing was written.",
+      );
+    }
     const serviceAccount = loadServiceAccount(dir("firebaseDir"), config.projectId);
     await confirmProduction(file, dump, config.projectId);
     initializeApp({ credential: cert(serviceAccount), projectId: config.projectId });
@@ -132,12 +140,21 @@ async function main() {
 
   const db = getFirestore();
   const counts = {};
-  for (const [name, docs] of Object.entries(dump.collections)) {
-    for (const doc of docs) await restoreDoc(db, revive, name, doc, counts);
+  let missing = 0;
+  for (const { collection, id, data } of writes) {
+    if (data === null) {
+      missing += 1;
+      continue;
+    }
+    await db.collection(collection).doc(id).set(data);
+    counts[collection] = (counts[collection] ?? 0) + 1;
   }
   console.log(`\nrestored from ${file} (exported ${dump.exportedAt}):`);
   for (const [path, n] of Object.entries(counts).sort()) {
     console.log(`  ${n.toString().padStart(5)}  ${path}`);
+  }
+  if (missing > 0) {
+    console.log(`  ${missing.toString().padStart(5)}  missing parents, not created (as in the dump)`);
   }
 }
 

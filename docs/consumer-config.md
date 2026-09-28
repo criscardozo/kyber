@@ -73,7 +73,7 @@ anywhere in the consumer).
 
 ```json
 {
-  "format": 1,
+  "format": 2,
   "name": "<name>",
   "project": "<the project the connection was actually opened to>",
   "source": "production | emulator",
@@ -82,12 +82,24 @@ anywhere in the consumer).
 }
 ```
 
+A document that does not exist but has subcollections under it is written as
+`{ "id": "...", "missing": true, "collections": { ... } }`, with no `data`.
+Restore puts back what is under it and does not create it. Format 1 left
+those subtrees out of the dump without a word; it reads the same otherwise,
+so a format 1 dump still restores. A restore older than format 2 refuses a
+format 2 dump instead of creating each missing parent as an empty document.
+
+Restore reads and checks the whole dump before it writes the first document:
+an unknown tag, a `$timestamp` that is not a date, a document without an id
+or without data stops it with nothing written, naming the document.
+
 Timestamps are tagged: `{ "$timestamp": "<ISO instant>" }`, alone in its
-object. GeoPoint, DocumentReference and Bytes make the backup stop, naming the
-document and the field. `source` and `project` describe the connection that
-was opened, never an argument. The tag is a guard for the future, not a repair:
-a dump written before the format is read exactly as it was written, and only
-where the consumer has opted in (`restore.legacyIsoTimestamps`).
+object. GeoPoint, DocumentReference, Bytes, NaN and ±Infinity make the backup
+stop, naming the document and the field. `source` and `project` describe the
+connection that was opened, never an argument. The tag is a guard for the
+future, not a repair: a dump written before the format is read exactly as it
+was written, and only where the consumer has opted in
+(`restore.legacyIsoTimestamps`).
 
 ## The rules-tests helper must not opine
 

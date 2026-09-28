@@ -14,11 +14,23 @@
 // Anything else Firestore can hold and no consumer uses — GeoPoint,
 // DocumentReference, Bytes — throws instead of being mangled into a shape that
 // looks fine in JSON. If one ever appears, the backup stops rather than lying.
+// The same goes for NaN and ±Infinity, which Firestore stores as doubles and
+// JSON.stringify writes as `null` without a word.
 
 import { KyberError } from "./errors.mjs";
 
-/** Written into every dump's header. Bump it when the shape changes. */
-export const DUMP_FORMAT = 1;
+/**
+ * Written into every dump's header. Bump it when the shape changes.
+ *
+ * 2 added `"missing": true`: a document that does not exist but has
+ * subcollections under it, which format 1 left out of the dump entirely. The
+ * bump is what keeps an older restore from reading one as an empty document
+ * and creating it; that restore refuses a format it does not know.
+ */
+export const DUMP_FORMAT = 2;
+
+/** Formats this restore reads. 1 is 2 without `missing`, so one reader serves both. */
+const READABLE_FORMATS = new Set([1, 2]);
 
 /** A strict ISO-8601 instant, the only string the legacy path ever converts. */
 const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
@@ -46,6 +58,7 @@ export function createCodec({ Timestamp }) {
     }
     if (Array.isArray(value)) return value.map((item, i) => serialize(item, `${at}[${i}]`));
     if (value instanceof Uint8Array) throw refuse("Bytes");
+    if (typeof value === "number" && !Number.isFinite(value)) throw refuse(String(value));
     if (value !== null && typeof value === "object") {
       if (!isPlainObject(value)) throw refuse(value.constructor?.name ?? "a non-plain object");
       return Object.fromEntries(
@@ -63,6 +76,19 @@ export function createCodec({ Timestamp }) {
     return value;
   }
 
+  /**
+   * An ISO string to a Timestamp, refusing one that is not a date. Without the
+   * check a hand-edited value reaches firebase-admin, which throws a plain
+   * Error about "seconds" that names neither the value nor the document.
+   */
+  function timestampOf(iso) {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) {
+      throw new KyberError(`Corrupt dump: ${JSON.stringify(iso)} is not a date.`);
+    }
+    return Timestamp.fromDate(date);
+  }
+
   /** Tagged shapes back into Firestore values. For dumps with a `format`. */
   function revive(value) {
     if (Array.isArray(value)) return value.map(revive);
@@ -75,7 +101,7 @@ export function createCodec({ Timestamp }) {
               `and hold a string, got ${JSON.stringify(value)}.`,
           );
         }
-        return Timestamp.fromDate(new Date(value.$timestamp));
+        return timestampOf(value.$timestamp);
       }
       const unknownTag = keys.find((key) => key.startsWith("$"));
       if (unknownTag !== undefined) {
@@ -97,7 +123,7 @@ export function createCodec({ Timestamp }) {
    */
   function reviveLegacy(value, key = "") {
     if (typeof value === "string" && key.endsWith("At") && ISO_INSTANT.test(value)) {
-      return Timestamp.fromDate(new Date(value));
+      return timestampOf(value);
     }
     if (Array.isArray(value)) return value.map((v) => reviveLegacy(v, key));
     if (value !== null && typeof value === "object") {
@@ -134,14 +160,72 @@ export function createCodec({ Timestamp }) {
           '  "restore": { "legacyIsoTimestamps": true } in .kyber/config.json.',
       );
     }
-    if (dump.format === DUMP_FORMAT) return revive;
+    if (READABLE_FORMATS.has(dump.format)) return revive;
     throw new KyberError(
       `This dump is format ${JSON.stringify(dump.format)}; this restore reads ` +
         `format ${DUMP_FORMAT}. Update kyber before restoring it.`,
     );
   }
 
-  return { serialize, revive, reviveLegacy, selectReviver };
+  /**
+   * Every write a restore will make, in order, with every value already
+   * revived — or a refusal, before anything has been written.
+   *
+   * Reviving inside the write loop meant a bad value in document 300 of 500
+   * stopped a production restore with 299 documents already overwritten, and
+   * the promise that an unreadable dump is refused with nothing written was
+   * only true of the header. Now the whole tree is read first; the loop that
+   * writes has nothing left in it that can refuse.
+   *
+   * A `missing` document is kept in the plan without data: its subcollections
+   * are restored under it and the document itself is not created, which is
+   * how it was found.
+   */
+  function restorePlan(dump, config) {
+    const revive = selectReviver(dump, config);
+    const writes = [];
+    const walk = (collectionPath, docs) => {
+      if (!Array.isArray(docs)) {
+        throw new KyberError(`Corrupt dump: ${collectionPath} is not a list of documents.`);
+      }
+      docs.forEach((doc, i) => {
+        const at = `${collectionPath}[${i}]`;
+        if (doc === null || typeof doc !== "object") {
+          throw new KyberError(`Corrupt dump: ${at} is not a document.`);
+        }
+        if (typeof doc.id !== "string" || doc.id === "" || doc.id.includes("/")) {
+          throw new KyberError(`Corrupt dump: ${at} has no usable id (${JSON.stringify(doc.id)}).`);
+        }
+        const path = `${collectionPath}/${doc.id}`;
+        let data = null;
+        if (doc.missing === true) {
+          if ("data" in doc) {
+            throw new KyberError(`Corrupt dump: ${path} is marked missing and also has data.`);
+          }
+        } else {
+          if (!isPlainObject(doc.data)) {
+            throw new KyberError(`Corrupt dump: ${path} has no data object.`);
+          }
+          try {
+            data = revive(doc.data);
+          } catch (error) {
+            if (error instanceof KyberError) throw new KyberError(`${path}: ${error.message}`);
+            throw error;
+          }
+        }
+        writes.push({ collection: collectionPath, id: doc.id, data });
+        const children = doc.collections ?? {};
+        if (!isPlainObject(children)) {
+          throw new KyberError(`Corrupt dump: ${path} has a "collections" that is not an object.`);
+        }
+        for (const [name, childDocs] of Object.entries(children)) walk(`${path}/${name}`, childDocs);
+      });
+    };
+    for (const [name, docs] of Object.entries(dump.collections)) walk(name, docs);
+    return writes;
+  }
+
+  return { serialize, revive, reviveLegacy, selectReviver, restorePlan };
 }
 
 /** `<name>-<source>-<stamp>.json`, a name a directory listing can be read by. */
