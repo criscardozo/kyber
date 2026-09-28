@@ -16,12 +16,12 @@ down to the same reasoning in the comments.
 
 The consumer describes its destinations and calls `main()`:
 
-    from tokens import Destination, load, main
+    from tokens import Block, Destination, load, main
 
     DOC = load(ROOT / "tokens.json")
 
     def swift_decl(name, entry):
-        ...  # this project's spelling, or None to skip the token
+        ...  # this project's lines for the token, or [] to skip it
 
     main(DOC, [
         Destination(CSS, css_lines, css_pattern),
@@ -88,21 +88,27 @@ def flat(doc: dict, group: str = "color") -> list[tuple[str, dict]]:
     now carries both shapes — the earlier one had only the nested one, so it
     reproduced the mechanism and not the shape.
 
+    It did not, for a while, do what that paragraph says: the fix read one
+    level or two and stopped, so a third level — `color.surface.card.raised` —
+    was dropped without a word. The walk is recursive now, at any depth, and
+    never descends into a token.
+
     Keys beginning with `$` are DTCG metadata (`$description`), never tokens.
     """
     node = doc.get(group, {})
-    if not isinstance(node, dict):
-        return []
     out: list[tuple[str, dict]] = []
-    for name, child in node.items():
-        if name.startswith("$") or not isinstance(child, dict):
-            continue
-        if _is_token(child):
-            out.append((name, child))
-            continue
-        for inner, entry in child.items():
-            if not inner.startswith("$") and _is_token(entry):
-                out.append((inner, entry))
+
+    def walk(node: dict) -> None:
+        for name, child in node.items():
+            if name.startswith("$") or not isinstance(child, dict):
+                continue
+            if _is_token(child):
+                out.append((name, child))
+            else:
+                walk(child)
+
+    if isinstance(node, dict):
+        walk(node)
     return out
 
 
@@ -113,9 +119,22 @@ def tokens_of(doc: dict, groups: str | list[str]) -> list[tuple[str, dict]]:
     wants both in one pass — one report, one exit code. Passing them
     separately would verify twice and leave the caller to combine two answers,
     which is how one of them ends up unread.
+
+    Two tokens with one name are refused. Every destination spells a token by
+    its leaf name, so `surface.ground` and `text.ground` would be written to
+    the same lines twice, the second silently winning, with `--write`
+    reporting success.
     """
     names = [groups] if isinstance(groups, str) else list(groups)
-    return [pair for g in names for pair in flat(doc, g)]
+    pairs = [pair for g in names for pair in flat(doc, g)]
+    seen: set[str] = set()
+    for name, _ in pairs:
+        if name in seen:
+            raise ValueError(
+                f"dos tokens se llaman {name!r}: todo destino los escribiría en el mismo lugar"
+            )
+        seen.add(name)
+    return pairs
 
 
 def css_value(value) -> str:
@@ -185,20 +204,91 @@ def rewrite_declarations(text: str, pattern: re.Pattern, values: Iterable[str]) 
     return pattern.sub(swap, text), replaced, matched, reindented
 
 
-def _stripped(text: str) -> list[str]:
-    return [line.strip() for line in text.splitlines()]
+def _lines(text: str) -> list[str]:
+    """Lines as verify compares them: indentation kept, trailing blanks not."""
+    return [line.rstrip() for line in text.splitlines()]
+
+
+def _same(have: str, want: str) -> bool:
+    """Does a line on disk say what a declaration line says?
+
+    Indentation counts exactly when the declaration carries its own, which is
+    the rule `write` already applies. A declaration WITH a margin replaces the
+    matched span margin and all, so four spaces on disk against two emitted is
+    a re-indent `write` refuses — and verify, which used to strip both sides,
+    passed that file: CI green over a file the generator could not rebuild.
+    A declaration WITHOUT one is spliced in after whatever margin the file
+    already has, at any depth, so there only the content can be compared.
+
+    Comparing the margin always was the first fix, and it put a consumer's
+    verify in red over a stylesheet its own `--write` left byte for byte
+    unchanged: its callback emits bare declarations and its pattern leaves the
+    indentation alone. Found by running the fix against both consumers before
+    shipping it, not after.
+    """
+    return have == want if want[:1].isspace() else have.lstrip() == want
+
+
+def _decls(dest, name: str, entry: dict) -> list[str]:
+    """What a destination emits for a token, with None read as nothing.
+
+    The module docstring once said a callback could return None to skip a
+    token and the Destination docstring said an empty list. `write` skipped
+    None; `verify` and `show` raised TypeError on it. Both mean skip now, in
+    every caller.
+    """
+    return list(dest.declarations(name, entry) or [])
+
+
+def _key(path) -> Path:
+    """One identity per file, however each destination spelled its path.
+
+    Keyed by the path as written, `Theme.swift` and `./Theme.swift` were two
+    files: each was rebuilt from what was on disk, the last one written won,
+    and the run listed the file twice and reported success over the half it
+    had just thrown away — the clobbering the shared-file test exists to
+    prevent, through a door that test did not try.
+    """
+    return Path(path).resolve()
+
+
+def _read(destinations) -> tuple[dict[Path, str], dict[Path, str], dict[Path, str]]:
+    """Each file once: its text, its line ending, and the name to report.
+
+    Read with the line endings as they are rather than translated, and
+    written back the same way. Translating on read and on write rewrote a
+    CRLF file as LF on its first real change — every line in the diff, none
+    of them a value — and on Windows would have done the reverse to every LF
+    file. The text is handed to the patterns with plain `\n`, which is what
+    every consumer's pattern was written against. A file that mixes the two
+    has no ending to put back, and `write` refuses to change it.
+    """
+    texts: dict[Path, str] = {}
+    endings: dict[Path, str] = {}
+    shown: dict[Path, str] = {}
+    for dest in destinations:
+        key = _key(dest.path)
+        if key in texts:
+            continue
+        with open(key, encoding="utf-8", newline="") as handle:
+            raw = handle.read()
+        crlf = raw.count("\r\n")
+        endings[key] = "\n" if crlf == 0 else "\r\n" if crlf == raw.count("\n") else "mixed"
+        texts[key] = raw.replace("\r\n", "\n")
+        shown[key] = str(dest.path)
+    return texts, endings, shown
 
 
 def count_block(haystack: list[str], needle: list[str]) -> int:
     """How many times `needle` appears as consecutive lines of `haystack`.
 
-    Line-aligned and whitespace-normalised, which is the whole point. Asking
-    `decl in text` instead looks right and is not: a declaration indented two
-    spaces is a SUBSTRING of the same declaration indented four, so a
-    stylesheet that carries a token at both depths — a nested media query and a
-    flat override — verifies green while one of the two is corrupt, because the
-    string being searched for is found hiding inside the other. Reported by a
-    consumer whose file has exactly that shape.
+    Line-aligned, and margins compared per `_same`, which is the whole point.
+    Asking `decl in text` instead looks right and is not: a declaration indented two spaces is a SUBSTRING
+    of the same declaration indented four, so a stylesheet that carries a
+    token at both depths — a nested media query and a flat override —
+    verifies green while one of the two is corrupt, because the string being
+    searched for is found hiding inside the other. Reported by a consumer
+    whose file has exactly that shape.
 
     Counting rather than merely finding, for the other half of the same
     problem: present-somewhere says nothing about present-everywhere.
@@ -206,7 +296,11 @@ def count_block(haystack: list[str], needle: list[str]) -> int:
     if not needle:
         return 0
     n = len(needle)
-    return sum(1 for i in range(len(haystack) - n + 1) if haystack[i : i + n] == needle)
+    return sum(
+        1
+        for i in range(len(haystack) - n + 1)
+        if all(_same(have, want) for have, want in zip(haystack[i : i + n], needle))
+    )
 
 
 class AnchorError(ValueError):
@@ -265,7 +359,7 @@ class Block:
         """Every line the region should carry, in the document's own order."""
         out: list[str] = []
         for name, entry in tokens_of(doc, groups):
-            out.extend(self.declarations(name, entry))
+            out.extend(_decls(self, name, entry))
         return out
 
     def body(self, text: str) -> tuple[int, int]:
@@ -321,7 +415,7 @@ class Block:
 
     def current(self, text: str) -> list[str]:
         start, stop = self.body(text)
-        return [line for line in text[start:stop].splitlines()]
+        return text[start:stop].splitlines()
 
 
 @dataclass(frozen=True)
@@ -398,8 +492,8 @@ def verify(doc: dict, destinations: list[Destination | Block],
     checks everything, and "0 mismatches" out of zero declarations is the most
     absorbable result there is (see `docs/guardas.md`).
     """
-    texts = {d.path: Path(d.path).read_text(encoding="utf-8") for d in destinations}
-    lines = {p: _stripped(t) for p, t in texts.items()}
+    texts, _, _ = _read(destinations)
+    lines = {key: _lines(text) for key, text in texts.items()}
     missing: list[str] = []
     checked = 0
     blocks = [d for d in destinations if isinstance(d, Block)]
@@ -407,21 +501,22 @@ def verify(doc: dict, destinations: list[Destination | Block],
 
     for name, entry in tokens_of(doc, groups):
         for dest in plain:
-            if not dest.carries(name, entry, texts[dest.path]):
+            key = _key(dest.path)
+            if not dest.carries(name, entry, texts[key]):
                 continue
-            decls = dest.declarations(name, entry)
+            decls = _decls(dest, name, entry)
             checked += len(decls)
             # Grouped, so a token declared twice with the same text has to be
             # there twice. Finding it once and calling that done is how a
             # stale second copy survives the check that exists to catch it.
             wanted: dict[tuple[str, ...], int] = {}
             for decl in decls:
-                key = tuple(_stripped(decl))
-                wanted[key] = wanted.get(key, 0) + 1
-            for key, times in wanted.items():
-                found = count_block(lines[dest.path], list(key))
+                want = tuple(_lines(decl))
+                wanted[want] = wanted.get(want, 0) + 1
+            for want, times in wanted.items():
+                found = count_block(lines[key], list(want))
                 if found < times:
-                    where = " / ".join(key)
+                    where = " / ".join(line.strip() for line in want)
                     missing.append(
                         f"{dest.name()}  {where}"
                         + (f"  (aparece {found} de {times} veces)" if times > 1 else "")
@@ -437,7 +532,7 @@ def verify(doc: dict, destinations: list[Destination | Block],
             if decls:
                 pattern = dest.pattern(name, entry)
                 if pattern is not None:
-                    seen = len(pattern.findall(texts[dest.path]))
+                    seen = len(pattern.findall(texts[key]))
                     if seen > len(decls):
                         missing.append(
                             f"{dest.name()}  {name} aparece {seen} vez(ces) en el archivo "
@@ -451,25 +546,29 @@ def verify(doc: dict, destinations: list[Destination | Block],
     # half cannot ask that question — it only ever asks whether what it emits
     # is present, so an extra neighbour sits there unnoticed for good.
     for blk in blocks:
-        want = blk.render(doc, groups)
+        want = [line for decl in blk.render(doc, groups) for line in _lines(decl)]
+        if not want:
+            # The same refusal `write` makes. Without it, a block that emits
+            # nothing passed here beside any destination that checked
+            # something, and failed only when somebody ran --write.
+            missing.append(f"{blk.name()}  el bloque quedaría vacío, no se emite ningún token")
+            continue
         checked += len(want)
         try:
-            have = blk.current(texts[blk.path])
+            have = _lines("\n".join(blk.current(texts[_key(blk.path)])))
         except AnchorError as err:
             missing.append(str(err))
             continue
-        stripped_have = [line.strip() for line in have]
-        stripped_want = [line.strip() for line in want]
-        if stripped_have != stripped_want:
-            absent = [line for line in stripped_want if line not in stripped_have]
-            extra = [line for line in stripped_have if line not in stripped_want]
+        if have != want:
+            absent = [line.strip() for line in want if line not in have]
+            extra = [line.strip() for line in have if line not in want]
             detail = []
             if absent:
                 detail.append("falta: " + " / ".join(absent[:3]))
             if extra:
                 detail.append("sobra: " + " / ".join(extra[:3]))
             if not detail:
-                detail.append("el mismo contenido en otro orden")
+                detail.append("el mismo contenido en otro orden o con otra indentación")
             missing.append(f"{blk.name()}  bloque — " + "; ".join(detail))
 
     if checked == 0:
@@ -480,8 +579,14 @@ def verify(doc: dict, destinations: list[Destination | Block],
         for m in missing:
             print(f"    · {m}")
         return 1
-    print(f"  las {checked} declaraciones coinciden con el código, carácter por carácter")
+    print(f"  las {checked} declaraciones coinciden con el código, línea por línea")
     return 0
+
+
+def _reaches(pattern: re.Pattern, text: str, span: tuple[int, int]) -> bool:
+    """Does any match of `pattern` in `text` overlap the character span?"""
+    start, stop = span
+    return any(m.start() < stop and m.end() > start for m in pattern.finditer(text))
 
 
 def write(doc: dict, destinations: list[Destination | Block],
@@ -494,7 +599,7 @@ def write(doc: dict, destinations: list[Destination | Block],
     written only after all of them have been rebuilt in memory, so a failure
     halfway through leaves the tree as it was rather than half-generated.
     """
-    texts = {d.path: Path(d.path).read_text(encoding="utf-8") for d in destinations}
+    texts, endings, shown = _read(destinations)
     updated = dict(texts)
     problems: list[str] = []
     rewritten = 0
@@ -504,26 +609,29 @@ def write(doc: dict, destinations: list[Destination | Block],
 
     for name, entry in tokens_of(doc, groups):
         for dest in plain:
-            if not dest.carries(name, entry, updated[dest.path]):
+            key = _key(dest.path)
+            if not dest.carries(name, entry, updated[key]):
                 continue
-            decls = dest.declarations(name, entry)
+            decls = _decls(dest, name, entry)
             if not decls:
                 continue
             pattern = dest.pattern(name, entry)
             if pattern is None:
                 continue
-            new, count, matched, reindented = rewrite_declarations(
-                updated[dest.path], pattern, decls
-            )
+            new, count, matched, reindented = rewrite_declarations(updated[key], pattern, decls)
             if reindented:
                 problems.append(
                     f"{dest.name()}: {name} cambiaría la indentación de {reindented} "
                     "declaración(es) — el patrón se come el espacio inicial y las "
                     "declaraciones lo traen fijo"
                 )
-            # A token the file does not name at all is a no-op and legitimate:
-            # that is how a subset stays a subset. Anything between zero and
-            # agreement is not, and it is wrong in BOTH directions.
+            # A token a SUBSET destination's file does not name is a no-op and
+            # legitimate: that is what makes it a subset. For any other
+            # destination zero matches is a token it owns and cannot find, and
+            # used to pass here too — a comment from before `subset` existed
+            # still called it legitimate for everyone, so a full destination
+            # missing a token wrote the rest, said so, and left verify to fail.
+            # Anything between zero and agreement is wrong in BOTH directions.
             #
             # Too FEW matches means only some of a token's declarations were
             # rewritten, leaving the file internally inconsistent.
@@ -536,32 +644,50 @@ def write(doc: dict, destinations: list[Destination | Block],
             # carried a stale third copy past both guards, silently and
             # for good. Found by reconciling two declaration counts that did
             # not agree.
-            if matched and matched != len(decls):
+            if matched != len(decls) and (matched or not dest.subset):
                 problems.append(
                     f"{dest.name()}: {name} aparece {matched} vez(ces) en el archivo "
                     f"y se emiten {len(decls)} declaraciones"
                 )
-            updated[dest.path] = new
+            updated[key] = new
             rewritten += count
 
     # Blocks last, because they replace their region whole and would
     # overwrite anything a pattern had just written inside it. Which is a
     # failure worth naming rather than tolerating: the other destination
     # reports the declarations it rewrote, the file does not carry them, and
-    # both halves look like they worked. So the region is compared before and
-    # after the rewrites, and disagreement stops the run.
+    # both halves look like they worked.
+    #
+    # Asked by POSITION: does any other destination's pattern match inside
+    # the region? Comparing the region's bytes before and after the rewrites
+    # was the first version, and it missed the case where the declarations
+    # inside already carried the right values — the rewrite changed nothing,
+    # the bytes agreed, and the splice deleted them while the run reported
+    # success. The byte comparison stays behind it for a match that straddles
+    # an anchor.
     for blk in blocks:
+        key = _key(blk.path)
         want = blk.render(doc, groups)
         try:
-            before = blk.current(texts[blk.path])
-            after = blk.current(updated[blk.path])
+            span = blk.body(texts[key])
+            before = blk.current(texts[key])
+            after = blk.current(updated[key])
         except AnchorError as err:
             problems.append(str(err))
             continue
-        if before != after:
+        intruders = []
+        for name, entry in tokens_of(doc, groups):
+            for dest in plain:
+                if _key(dest.path) != key or not _decls(dest, name, entry):
+                    continue
+                pattern = dest.pattern(name, entry)
+                if pattern is not None and _reaches(pattern, texts[key], span):
+                    intruders.append(f"{dest.name()} declara {name}")
+        if intruders or before != after:
             problems.append(
-                f"{blk.name()}: otro destino escribió adentro del bloque, que este "
+                f"{blk.name()}: otro destino escribe adentro del bloque, que este "
                 "destino reemplaza entero — los dos dirían que escribieron"
+                + (f" ({', '.join(intruders[:3])})" if intruders else "")
             )
             continue
         if not want:
@@ -570,10 +696,17 @@ def write(doc: dict, destinations: list[Destination | Block],
             # zero for a reason nobody reads.
             problems.append(f"{blk.name()}: el bloque quedaría vacío, no se emite ningún token")
             continue
-        updated[blk.path] = blk.splice(updated[blk.path], want)
+        updated[key] = blk.splice(updated[key], want)
         # Counted whether or not the bytes changed, like the pattern half: a
         # second run rewriting the same values is a success, not an empty one.
         rewritten += len(want)
+
+    for key, text in updated.items():
+        if text != texts[key] and endings[key] == "mixed":
+            problems.append(
+                f"{shown[key]}: mezcla finales de línea CRLF y LF, y no hay uno solo "
+                "que devolverle — normalizalo antes de escribir"
+            )
 
     if problems:
         print(f"  {len(problems)} destino(s) quedarían a medias, no se escribió nada:")
@@ -584,7 +717,7 @@ def write(doc: dict, destinations: list[Destination | Block],
         print("  no se reescribió ninguna declaración: ningún patrón coincidió")
         return 1
 
-    # By PATH, not by destination. Two destinations can share one file — a
+    # By FILE, not by destination. Two destinations can share one file — a
     # theme taking colours line by line and radii as a block — and iterating
     # destinations wrote that file twice and then listed it twice in the
     # report. The second write was harmless and the second line was not: a
@@ -592,10 +725,11 @@ def write(doc: dict, destinations: list[Destination | Block],
     # written twice, and a report that needs interpreting is one that stops
     # being read.
     written = []
-    for path in dict.fromkeys(d.path for d in destinations):
-        if updated[path] != texts[path]:
-            Path(path).write_text(updated[path], encoding="utf-8")
-            written.append(str(path))
+    for key, text in updated.items():
+        if text != texts[key]:
+            with open(key, "w", encoding="utf-8", newline="") as handle:
+                handle.write(text.replace("\n", endings[key]))
+            written.append(shown[key])
     if not written:
         # Distinguished from having written, because on a second run they are
         # the same number of declarations and a different fact about the disk.
@@ -612,7 +746,7 @@ def show(doc: dict, destinations: list[Destination | Block],
     for dest in destinations:
         print(f"// {dest.name()}")
         for name, entry in tokens_of(doc, groups):
-            for decl in dest.declarations(name, entry):
+            for decl in _decls(dest, name, entry):
                 print(decl)
         print()
     return 0
@@ -636,6 +770,11 @@ def main(doc: dict, destinations: list[Destination | Block], argv: list[str] | N
     usage = "uso: emit.py [--verify | --write | --help]"
     if unknown:
         print(f"no entiendo {' '.join(unknown)}.\n{usage}", file=sys.stderr)
+        return 1
+    if "--write" in args and "--verify" in args:
+        # One of them would win without a word, and which one is not
+        # something to learn from the result.
+        print(f"--write y --verify no van juntos.\n{usage}", file=sys.stderr)
         return 1
     if "--help" in args or "-h" in args:
         print(usage)

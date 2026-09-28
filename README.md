@@ -23,7 +23,7 @@ down a rule of its own.
 | 🔥 Firebase | `firebase/` — the vitest settings every consumer's rules suite shares |
 | 📌 Stack | `stack.json` — one declared version per shared tool. Each consumer's own test makes it binding; nothing here reads it |
 | 🧪 Tests | `test/` — `node --test` against a fixture consumer, no install needed |
-| 🎨 Tokens | `design/tokens.py` — the machinery both token emitters were writing twice: the walk, the value spelling, the in-place rewrite, and verify/write. Each consumer keeps its own palette and its own declaration spelling |
+| 🎨 Tokens | `design/tokens.py` — the machinery both token emitters were writing twice: the walk, the value spelling, the in-place rewrite, the anchored block for a file that names no token yet, and verify/write. Each consumer keeps its own palette and its own declaration spelling |
 | 💎 Mark | `icon.svg` — the crystal, hand-drawn. `icon.png` renders it; `banner.png` is built from it by `design/build-banner.mjs` |
 
 ## What it does
@@ -367,6 +367,10 @@ out not to qualify for reasons nobody had guessed:
   from a source nobody decided freezes it with a tool's authority (see
   `docs/guardas.md`); the reconciling is a person's, and it is Cristian's.
 
+  **Second pass, closed the same day.** The anchored-block destination is in
+  as `Block`, and both consumers' emitters write their iOS radii through it,
+  between `// kyber:radius start` and `// kyber:radius end`.
+
   One consequence a consumer found while reviewing the design, worth writing
   before the pass rather than after: tokenising can TURN OFF the guard that
   watches the call sites. A check that catches a literal outside the scale
@@ -375,12 +379,12 @@ out not to qualify for reasons nobody had guessed:
   guard is written BEFORE the tokens exist, so its first run fails on its own
   with every current literal in view. Written afterwards it is born green.
   That half names each consumer's own paths, so it stays there.
-  The two projects solved the same problem in opposite directions: one
-  generates the stylesheet and the Swift theme from a token file and proves it
-  in CI with a diff, the other writes the palette twice and has a test
-  comparing the copies. There is no intersection to extract — a strategy has to
-  be chosen first, and generating is the stronger one (see `docs/guardas.md`).
-  That is a migration in a consumer, so it is Cristian's call, not this repo's.
+  Before the machinery came in, the two projects had solved the same problem
+  in opposite directions: one generated the stylesheet and the Swift theme
+  from a token file and proved it in CI with a diff, the other wrote the
+  palette twice and had a test comparing the copies. There was no
+  intersection to extract until a strategy was chosen, and generating is the
+  stronger one (see `docs/guardas.md`). Both generate now.
 - **The reusable backup workflow came in, and is now OUT again** — removed
   2026-09-20 with zero callers. It was byte-identical in both consumers when it
   was extracted, so it qualified; what changed is not the code but the design

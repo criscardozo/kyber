@@ -17,6 +17,7 @@ from tokens import (  # noqa: E402
     css_value,
     flat,
     rewrite_declarations,
+    show,
     tokens_of,
     verify,
     write,
@@ -136,6 +137,28 @@ class Walk(unittest.TestCase):
 
     def test_an_absent_group_is_empty_not_an_error(self):
         self.assertEqual(flat(DOC, "spacing"), [])
+
+    def test_flat_reads_a_third_level_instead_of_dropping_it(self):
+        # The docstring promised a walk by `$value`, and the code read one
+        # level or two: a token three levels down came back as nothing at all.
+        doc = {"color": {"surface": {"card": {"raised": {"$value": "#FFFFFF"}}},
+                         "ink": {"$value": "#111111"}}}
+        self.assertEqual([n for n, _ in flat(doc)], ["raised", "ink"])
+
+    def test_flat_skips_a_dollar_key_even_when_it_holds_a_value(self):
+        # Metadata at any depth is metadata. The fixture above never put a
+        # `$value` inside one, so dropping that check went unnoticed.
+        doc = {"color": {"surface": {"$meta": {"$value": "#000000"},
+                                     "ground": {"$value": "#F4F4F4"}}}}
+        self.assertEqual([n for n, _ in flat(doc)], ["ground"])
+
+    def test_two_tokens_with_one_name_are_refused(self):
+        # Every destination spells a token by its leaf name, so these two
+        # would be written into the same lines, the second one winning.
+        doc = {"color": {"surface": {"ground": {"$value": "#F4F4F4"}},
+                         "text": {"ground": {"$value": "#111111"}}}}
+        with self.assertRaises(ValueError):
+            tokens_of(doc, "color")
 
 
 class Rewrite(unittest.TestCase):
@@ -412,6 +435,120 @@ class VerifyAndWrite(unittest.TestCase):
         self.assertEqual(write(DOC, [colours, radii], ["color", "radius"]), 1)
         self.assertEqual(both.read_text(encoding="utf-8"), before)
 
+    def test_one_file_under_two_spellings_is_still_one_file(self):
+        # The shared-file test above spells the path once. Spelled twice, it
+        # was two files to write(): each half rebuilt from the original text,
+        # the last one written won, and the run reported both.
+        (self.dir / "sub").mkdir()
+        both = self.dir / "Theme.swift"
+        both.write_text(
+            "  --ground: #OLD;\n  --ground: #OLD;\n  --veil: a;\n  --veil: b;\n"
+            "  --ink: a;\n  --ink: b;\n    static let card: CGFloat = 99\n"
+            "    static let field: CGFloat = 99\n",
+            encoding="utf-8",
+        )
+        colours = Destination(both, colour_decls, colour_pattern, label="colours")
+        radii = Destination(self.dir / "sub" / ".." / "Theme.swift", swift_decls,
+                            swift_pattern, label="radii")
+        groups = ["color", "radius"]
+        self.assertEqual(write(DOC, [colours, radii], groups), 0)
+        out = both.read_text(encoding="utf-8")
+        self.assertIn("  --ground: #F4F4F4;", out)
+        self.assertIn("    static let card: CGFloat = 18", out)
+        self.assertEqual(verify(DOC, [colours, radii], groups), 0)
+
+    def test_a_full_destination_missing_a_token_refuses_to_write(self):
+        # Zero matches was accepted for every destination, from before
+        # `subset` existed: this wrote ground and veil, said so, and left
+        # verify to fail on ink afterwards.
+        self.css.write_text("  --ground: a;\n  --ground: b;\n  --veil: a;\n  --veil: b;\n",
+                            encoding="utf-8")
+        before = self.css.read_text(encoding="utf-8")
+        self.assertEqual(write(DOC, [self.dest()]), 1)
+        self.assertEqual(self.css.read_text(encoding="utf-8"), before)
+
+    def test_a_crlf_file_keeps_its_line_endings(self):
+        # Translated on read and on write, the first real change turned every
+        # line of a CRLF file into LF: a diff with no value in it.
+        body = "/* h */\r\n  --ground: #OLD;\r\n  --ground: #OLD;\r\n  --veil: a;\r\n" \
+               "  --veil: b;\r\n  --ink: a;\r\n  --ink: b;\r\n"
+        self.css.write_bytes(body.encode("utf-8"))
+        self.assertEqual(write(DOC, [self.dest()]), 0)
+        out = self.css.read_bytes().decode("utf-8")
+        self.assertIn("  --ground: #F4F4F4;\r\n", out)
+        self.assertEqual(out.count("\n"), out.count("\r\n"))
+        self.assertEqual(verify(DOC, [self.dest()]), 0)
+
+    def test_mixed_line_endings_refuse_to_write(self):
+        # No single ending to put back, so a write would pick one for every line.
+        body = "  --ground: #OLD;\r\n  --ground: #OLD;\n  --veil: a;\n  --veil: b;\n" \
+               "  --ink: a;\n  --ink: b;\n"
+        self.css.write_bytes(body.encode("utf-8"))
+        self.assertEqual(write(DOC, [self.dest()]), 1)
+        self.assertEqual(self.css.read_bytes().decode("utf-8"), body)
+
+    def test_verify_fails_on_the_indentation_write_refuses(self):
+        # These declarations carry a margin of two; the file has four. write
+        # refuses the re-indent, and verify, stripping both sides, said green.
+        self.css.write_text(
+            "".join(f"  {d}\n" for n, e in flat(DOC) for d in css_decls(n, e)), encoding="utf-8"
+        )
+        self.assertEqual(write(DOC, [self.dest()]), 1)
+        self.assertEqual(verify(DOC, [self.dest()]), 1)
+
+    def test_a_bare_declaration_matches_at_any_depth(self):
+        # The other shape, and the one the first fix for the test above broke:
+        # a consumer emits declarations with no margin and a pattern that
+        # leaves the file's alone, so the same line sits at two depths and
+        # write keeps both. verify must agree with that, not with a margin.
+        def bare(name, entry):
+            return [d.strip() for d in css_decls(name, entry)]
+
+        def unanchored(name, _entry):
+            return re.compile(rf"--{re.escape(name)}:[^;\n]+;")
+
+        dest = Destination(self.css, bare, unanchored, label="bare")
+        self.css.write_text(
+            ":root {\n  --ground: #F4F4F4;\n  --veil: rgba(16, 16, 16, 0.08);\n"
+            "  --ink: #111111;\n}\n@media (prefers-color-scheme: dark) {\n  :root {\n"
+            "    --ground: #161616;\n    --veil: rgba(255, 255, 255, 0.12);\n"
+            "    --ink: #EEEEEE;\n  }\n}\n",
+            encoding="utf-8",
+        )
+        before = self.css.read_text(encoding="utf-8")
+        self.assertEqual(verify(DOC, [dest]), 0)
+        self.assertEqual(write(DOC, [dest]), 0)
+        self.assertEqual(self.css.read_text(encoding="utf-8"), before)
+
+    def test_verify_names_a_copy_nobody_emits(self):
+        # The two copies it emits are right; the third is the stale one that
+        # neither write nor the presence check would ever touch.
+        self.css.write_text(
+            "".join(f"{d}\n" for n, e in flat(DOC) for d in css_decls(n, e))
+            + "  --ground: #STALE0;\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(verify(DOC, [self.dest()]), 1)
+
+    def test_none_from_a_callback_skips_the_token_everywhere(self):
+        # The module docstring once offered None; verify and show raised on it.
+        def only_ink(name, entry):
+            return css_decls(name, entry) if name == "ink" else None
+
+        dest = Destination(self.css, only_ink, css_pattern, label="ink")
+        self.css.write_text("  --ink: a;\n  --ink: b;\n", encoding="utf-8")
+        self.assertEqual(write(DOC, [dest]), 0)
+        self.assertEqual(verify(DOC, [dest]), 0)
+        self.assertEqual(show(DOC, [dest]), 0)
+
+    def test_writing_twice_produces_the_same_bytes(self):
+        self.css.write_text("/* h */\n  --ground: a;\n  --ground: b;\n  --veil: a;\n"
+                            "  --veil: b;\n  --ink: a;\n  --ink: b;\n", encoding="utf-8")
+        write(DOC, [self.dest()])
+        once = self.css.read_bytes()
+        write(DOC, [self.dest()])
+        self.assertEqual(self.css.read_bytes(), once)
+
 
 BEGIN = "    // kyber:radius start"
 END = "    // kyber:radius end"
@@ -659,6 +796,50 @@ class Blocks(unittest.TestCase):
         self.assertIn("radios", str(caught.exception))
         self.assertIn("cierre", str(caught.exception))
 
+    def test_fresh_declarations_inside_the_block_stop_the_run_too(self):
+        # The test above uses stale values, which is why it passed while this
+        # did not: with the right values already inside, the rewrite changed
+        # nothing, the region's bytes agreed before and after, and the splice
+        # deleted the colours while the run reported success.
+        self.swift.write_text(
+            f"enum Theme {{\n{BEGIN}\n"
+            + "".join(f"{d}\n" for n, e in flat(DOC) for d in css_decls(n, e))
+            + f"{END}\n}}\n",
+            encoding="utf-8",
+        )
+        before = self.swift.read_text(encoding="utf-8")
+        colours = Destination(self.swift, colour_decls, colour_pattern, label="colours")
+        self.assertEqual(write(DOC, [colours, self.block()], ["color", "radius"]), 1)
+        self.assertEqual(self.swift.read_text(encoding="utf-8"), before)
+
+    def test_a_block_of_wrapped_declarations_verifies_after_writing(self):
+        # A consumer wraps Swift lines past a measured column, so one
+        # declaration can be two lines. verify compared whole strings against
+        # physical lines and stayed red after every successful write.
+        def wrapped(name, entry):
+            value = entry["$value"]
+            if not isinstance(value, str):
+                return []
+            return [f"    static let {name}: CGFloat\n        = {value.removesuffix('px')}"]
+
+        blk = Block(self.swift, wrapped, BEGIN, END, label="radios")
+        self.file()
+        self.assertEqual(write(DOC, [blk], "radius"), 0)
+        self.assertEqual(verify(DOC, [blk], "radius"), 0)
+
+    def test_an_empty_block_fails_verify_as_it_fails_write(self):
+        # verify passed it beside any destination that checked something.
+        self.swift.write_text(
+            "  --ground: #F4F4F4;\n  --ground: #161616;\n  --veil: rgba(16, 16, 16, 0.08);\n"
+            "  --veil: rgba(255, 255, 255, 0.12);\n  --ink: #111111;\n  --ink: #EEEEEE;\n"
+            f"{BEGIN}\n{END}\n",
+            encoding="utf-8",
+        )
+        colours = Destination(self.swift, colour_decls, colour_pattern, label="colours")
+        empty = Block(self.swift, lambda n, e: [], BEGIN, END, label="vacío")
+        self.assertEqual(verify(DOC, [colours], ["color", "radius"]), 0)  # the control
+        self.assertEqual(verify(DOC, [colours, empty], ["color", "radius"]), 1)
+
 
 class Flags(unittest.TestCase):
     def setUp(self):
@@ -701,6 +882,25 @@ class Flags(unittest.TestCase):
     def test_help_does_not_run_anything(self):
         before = self.css.read_text(encoding="utf-8")
         self.assertEqual(self.quiet(["--help"])[0], 0)
+        self.assertEqual(self.css.read_text(encoding="utf-8"), before)
+
+    def test_each_flag_runs_its_own_action(self):
+        # Nothing drove main() past its refusals: --verify calling write, or
+        # no flag at all calling write, both passed the suite.
+        stale = "  --ground: #OLD;\n  --ground: #OLD;\n" + self.css.read_text(encoding="utf-8")[
+            len("  --ground: #F4F4F4;\n  --ground: #161616;\n"):]
+        self.css.write_text(stale, encoding="utf-8")
+        self.assertEqual(self.quiet(["--verify"])[0], 1)
+        code, text = self.quiet([])
+        self.assertEqual(code, 0)
+        self.assertIn("  --ground: #F4F4F4;", text)                    # show printed it
+        self.assertEqual(self.css.read_text(encoding="utf-8"), stale)  # and wrote nothing
+        self.assertEqual(self.quiet(["--write"])[0], 0)
+        self.assertEqual(self.quiet(["--verify"])[0], 0)
+
+    def test_write_and_verify_together_are_refused(self):
+        before = self.css.read_text(encoding="utf-8")
+        self.assertEqual(self.quiet(["--write", "--verify"])[0], 1)
         self.assertEqual(self.css.read_text(encoding="utf-8"), before)
 
 
