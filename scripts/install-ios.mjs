@@ -44,14 +44,22 @@
 // instead of the assurance, because this claim is only as true as the last
 // time somebody ran it.
 //
+// After installing it brings the app's crash reports back off the phone into
+// <consumer>/crash-logs/ (gitignore it): a free-team sideload never reaches
+// App Store Connect, so Xcode's Organizer collects nothing, and the install is
+// the one moment the phone is on a cable. Matched by the names in
+// `iosTargets` (or `iosScheme`). It never fails the install — that has
+// already succeeded — and says so when it could not look.
+//
 // Usage:  node kyber/scripts/install-ios.mjs [--device <udid-or-name>]
 // Reads from .kyber/config.json: bundleId, iosScheme, and optionally iosDir,
-// iosDevice and webManifest.
+// iosDevice, iosTargets and webManifest.
 
 import { execFileSync } from "node:child_process";
 import {
   copyFileSync,
   existsSync,
+  mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
@@ -63,6 +71,7 @@ import { basename, join } from "node:path";
 import { loadConsumer } from "./lib/consumer.mjs";
 import { KyberError, run } from "./lib/errors.mjs";
 import { belongsToApp, signingVerdict, versionVerdict } from "./lib/signing.mjs";
+import { crashLogsOf, crashSummary } from "./lib/crash-logs.mjs";
 
 const PROFILES = join(
   process.env.HOME ?? "",
@@ -76,6 +85,56 @@ const say = (text) => {
 };
 
 const sh = (cmd, args, opts = {}) => execFileSync(cmd, args, { encoding: "utf8", ...opts });
+
+/** Every file under `dir`, as paths relative to it. */
+function filesUnder(dir, prefix = "") {
+  const out = [];
+  for (const entry of readdirSync(join(dir, prefix), { withFileTypes: true })) {
+    const rel = prefix === "" ? entry.name : join(prefix, entry.name);
+    if (entry.isDirectory()) out.push(...filesUnder(dir, rel));
+    else out.push(rel);
+  }
+  return out;
+}
+
+/**
+ * Bring this app's crash reports off the phone. Prints what it found — the
+ * count against how many reports the phone had, so "none of ours" is never
+ * confused with "could not read any" — and never throws.
+ */
+function pullCrashLogs(device, targets, root) {
+  const pulled = mkdtempSync(join(tmpdir(), "kyber-crashes-"));
+  try {
+    sh("xcrun", [
+      "devicectl", "device", "copy", "from", "--device", device,
+      "--domain-type", "systemCrashLogs", "--source", "/", "--destination", pulled,
+    ]);
+    const all = filesUnder(pulled);
+    const ours = crashLogsOf(all, targets);
+    const dest = join(root, "crash-logs");
+    mkdirSync(dest, { recursive: true });
+    const fresh = ours.filter((rel) => !existsSync(join(dest, basename(rel))));
+    for (const rel of fresh) copyFileSync(join(pulled, rel), join(dest, basename(rel)));
+    console.log(
+      `   ${all.length} reportes en el teléfono, ${ours.length} de ${targets.join("/")}, ` +
+        `${fresh.length} nuevos en crash-logs/`,
+    );
+    for (const rel of fresh) {
+      const summary = crashSummary(readFileSync(join(dest, basename(rel)), "utf8"));
+      console.log(
+        summary === null
+          ? `   ${basename(rel)} (no pude leer la cabecera)`
+          : `   ${summary.app} ${summary.version} · ${summary.at}`,
+      );
+    }
+  } catch (error) {
+    console.log(
+      `   no pude traer los crash logs: ${String(error.stderr ?? error.message).slice(0, 200)}`,
+    );
+  } finally {
+    rmSync(pulled, { recursive: true, force: true });
+  }
+}
 
 /** The decoded plist of a .mobileprovision, or null when it cannot be read. */
 function readProfile(path) {
@@ -266,6 +325,8 @@ async function main() {
           const what = existsSync(path) ? readdirSync(path).join(" ") : "no embebido";
           console.log(`   ${extra.toLowerCase().padEnd(7)} ${what}`);
         }
+        say("6. Crash logs del teléfono");
+        pullCrashLogs(device, config.iosTargets ?? [config.iosScheme], root);
         say(`Listo. Vence en ${verdict.days} días.`);
         return;
       } catch (error) {
