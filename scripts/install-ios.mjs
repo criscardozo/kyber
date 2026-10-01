@@ -49,7 +49,11 @@
 // App Store Connect, so Xcode's Organizer collects nothing, and the install is
 // the one moment the phone is on a cable. Matched by the names in
 // `iosTargets` (or `iosScheme`). It never fails the install — that has
-// already succeeded — and says so when it could not look.
+// already succeeded — and says so when it could not look. Measured against a
+// real phone on 1 October 2026: the domain copied 556 reports from the whole
+// system, named `<executable>-<date>.ips` with `app_name` in the header line;
+// the watch's crashes arrive on the phone too. 159 were another app's watch
+// app, which is what told 0 of ours apart from a match that never matches.
 //
 // Usage:  node kyber/scripts/install-ios.mjs [--device <udid-or-name>]
 // Reads from .kyber/config.json: bundleId, iosScheme, and optionally iosDir,
