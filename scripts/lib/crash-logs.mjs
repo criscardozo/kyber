@@ -48,3 +48,16 @@ export function crashSummary(text) {
     at: typeof header.timestamp === "string" ? header.timestamp : "?",
   };
 }
+
+/**
+ * The relative paths in a `devicectl device info files --json-output` listing.
+ * Anything not shaped like one is skipped, so a changed format reads as "no
+ * reports" and the caller's count says so, instead of crashing the install.
+ */
+export function listedPaths(listing) {
+  const files = listing?.result?.files;
+  if (!Array.isArray(files)) return [];
+  return files
+    .map((f) => f?.relativePath)
+    .filter((p) => typeof p === "string" && p !== "");
+}

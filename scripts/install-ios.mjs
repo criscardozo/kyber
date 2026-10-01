@@ -75,7 +75,7 @@ import { basename, join } from "node:path";
 import { loadConsumer } from "./lib/consumer.mjs";
 import { KyberError, run } from "./lib/errors.mjs";
 import { belongsToApp, signingVerdict, versionVerdict } from "./lib/signing.mjs";
-import { crashLogsOf, crashSummary } from "./lib/crash-logs.mjs";
+import { crashLogsOf, crashSummary, listedPaths } from "./lib/crash-logs.mjs";
 
 const PROFILES = join(
   process.env.HOME ?? "",
@@ -90,40 +90,51 @@ const say = (text) => {
 
 const sh = (cmd, args, opts = {}) => execFileSync(cmd, args, { encoding: "utf8", ...opts });
 
-/** Every file under `dir`, as paths relative to it. */
-function filesUnder(dir, prefix = "") {
-  const out = [];
-  for (const entry of readdirSync(join(dir, prefix), { withFileTypes: true })) {
-    const rel = prefix === "" ? entry.name : join(prefix, entry.name);
-    if (entry.isDirectory()) out.push(...filesUnder(dir, rel));
-    else out.push(rel);
-  }
-  return out;
-}
-
 /**
- * Bring this app's crash reports off the phone. Prints what it found — the
- * count against how many reports the phone had, so "none of ours" is never
- * confused with "could not read any" — and never throws.
+ * Bring this app's crash reports off the phone. Lists the crash domain, keeps
+ * the reports named after `targets`, and copies those one by one.
+ *
+ * It copied the whole domain in one go at first, and the second real run
+ * failed on a file that was not ours: a watch analytics report the phone
+ * would not open (POSIX error 1, under ProxiedDevice-…/Retired), and one
+ * unreadable file fails the whole copy. One file at a time, so a report that
+ * will not come only costs itself — and 500-odd reports nobody wanted stop
+ * crossing the cable. Prints the counts, so "none of ours" never passes for
+ * "could not look", and never throws: the install has already succeeded.
  */
 function pullCrashLogs(device, targets, root) {
-  const pulled = mkdtempSync(join(tmpdir(), "kyber-crashes-"));
+  const work = mkdtempSync(join(tmpdir(), "kyber-crashes-"));
   try {
+    const listingFile = join(work, "listing.json");
     sh("xcrun", [
-      "devicectl", "device", "copy", "from", "--device", device,
-      "--domain-type", "systemCrashLogs", "--source", "/", "--destination", pulled,
+      "devicectl", "device", "info", "files", "--device", device,
+      "--domain-type", "systemCrashLogs", "--json-output", listingFile,
     ]);
-    const all = filesUnder(pulled);
+    const all = listedPaths(JSON.parse(readFileSync(listingFile, "utf8")));
     const ours = crashLogsOf(all, targets);
     const dest = join(root, "crash-logs");
     mkdirSync(dest, { recursive: true });
     const fresh = ours.filter((rel) => !existsSync(join(dest, basename(rel))));
-    for (const rel of fresh) copyFileSync(join(pulled, rel), join(dest, basename(rel)));
-    console.log(
-      `   ${all.length} reportes en el teléfono, ${ours.length} de ${targets.join("/")}, ` +
-        `${fresh.length} nuevos en crash-logs/`,
-    );
+    const copied = [];
+    const failed = [];
     for (const rel of fresh) {
+      try {
+        sh("xcrun", [
+          "devicectl", "device", "copy", "from", "--device", device,
+          "--domain-type", "systemCrashLogs", "--source", rel,
+          "--destination", join(dest, basename(rel)),
+        ]);
+        copied.push(rel);
+      } catch {
+        failed.push(rel);
+      }
+    }
+    console.log(
+      `   ${all.length} entradas en el teléfono, ${ours.length} de ${targets.join("/")}, ` +
+        `${copied.length} nuevos en crash-logs/` +
+        (failed.length > 0 ? `, ${failed.length} que no se dejaron copiar` : ""),
+    );
+    for (const rel of copied) {
       const summary = crashSummary(readFileSync(join(dest, basename(rel)), "utf8"));
       console.log(
         summary === null
@@ -131,12 +142,13 @@ function pullCrashLogs(device, targets, root) {
           : `   ${summary.app} ${summary.version} · ${summary.at}`,
       );
     }
+    for (const rel of failed) console.log(`   no se copió: ${basename(rel)}`);
   } catch (error) {
     console.log(
       `   no pude traer los crash logs: ${String(error.stderr ?? error.message).slice(0, 200)}`,
     );
   } finally {
-    rmSync(pulled, { recursive: true, force: true });
+    rmSync(work, { recursive: true, force: true });
   }
 }
 

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { crashLogsOf, crashSummary } from "../scripts/lib/crash-logs.mjs";
+import { crashLogsOf, crashSummary, listedPaths } from "../scripts/lib/crash-logs.mjs";
 
 const TARGETS = ["Gastos", "GastosWidget", "GastosWatch"];
 
@@ -45,4 +45,32 @@ test("the summary is read off the .ips header line", () => {
 test("a header that does not parse gives no summary rather than a wrong one", () => {
   assert.equal(crashSummary("not json\n"), null);
   assert.equal(crashSummary(""), null);
+});
+
+test("the listing's paths are read off devicectl's JSON, directories and all", () => {
+  // The shape `devicectl device info files --json-output` wrote on a real
+  // phone: directories come back as entries too, and crashLogsOf drops them.
+  const listing = {
+    result: {
+      files: [
+        { name: "Assistant", relativePath: "Assistant" },
+        { name: "Gastos-2026-10-01-101112.ips", relativePath: "Gastos-2026-10-01-101112.ips" },
+        {
+          name: "WhatsAppWatchApp-2026-09-28-133325.ips",
+          relativePath: "ProxiedDevice-861e/Retired/WhatsAppWatchApp-2026-09-28-133325.ips",
+        },
+      ],
+    },
+  };
+  assert.deepEqual(listedPaths(listing), [
+    "Assistant",
+    "Gastos-2026-10-01-101112.ips",
+    "ProxiedDevice-861e/Retired/WhatsAppWatchApp-2026-09-28-133325.ips",
+  ]);
+});
+
+test("a listing of an unexpected shape lists nothing rather than throwing", () => {
+  assert.deepEqual(listedPaths({}), []);
+  assert.deepEqual(listedPaths(null), []);
+  assert.deepEqual(listedPaths({ result: { files: [{ name: "no path" }] } }), []);
 });
