@@ -2,6 +2,12 @@
   <img src="banner.png" alt="Kyber" width="360">
 </p>
 
+> **Retired on 22 October 2026, and archived.** There were not going to be
+> enough apps for a shared layer to pay for itself. Gastos now carries what it
+> used from here, in its own scripts, rules and design-system folders;
+> Stock still pins this repo as a submodule until it does the same. Kept,
+> not deleted, because the tags of both apps record a commit of it.
+
 The shared layer for the household apps of one author, on the same stack
 — SwiftUI on iOS with a widget and a watch app, Next.js on the web, Firebase on
 the Spark free tier, GitHub Actions on Linux only — which kept growing the same
